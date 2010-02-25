@@ -3,6 +3,7 @@ from threading import Thread
 from pymongo import Connection
 from pymongo.errors import CollectionInvalid
 from settings import MONGODB_NAME, MAX_COLLECTION_SIZE, LOGS
+from util import smart_str
 
 def main():
     for params in LOGS:
@@ -47,6 +48,8 @@ class SourceLog(object):
     def store_data(self):
         while True:
             line = self.stream.readline()
+            # line = unicode(line).encode('utf-8')
+            line = smart_str(line)
             data = self.parser.parse_line(line)
             if data:
                 data['server'] = self.host

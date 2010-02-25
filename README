@@ -1,0 +1,30 @@
+
+What it does (part 1):
+ - Creates processes that ssh to a remote host and run "tail -f" on the log file
+ - Parses the log file using Regular Expressions
+ - Stores the data in MongoDB
+
+What it does (part 2):
+ - Queries MongoDB and prints statistics in real-time
+
+Prerequisites:
+ - MongoDB
+ - PyMongo
+
+To use it:
+ - Start mongod
+ - Copy settings.py.template to settings.py and edit it
+ - In first terminal, run "python source.py"
+ - In second terminal, run "python analyzer.py"
+
+Example results:
+    Stats over last 60 seconds:
+       Total requests: 0
+       Cache hit rate: 0.0%
+       Domain1: 0
+       Domain2: 0
+       Domain3: 0
+
+Problems / Limitations:
+ - Leaves "zombie" "tail -f " processes
+ - Only works with my custom Nginx log file
