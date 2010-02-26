@@ -5,13 +5,13 @@ MAX_COLLECTION_SIZE = 10000000 # in bytes
 NG_CACHE_COLL = 'ng_cache'
 LOGS = (
     # (host, log_path, parser, mongodb_collection),
-    ('us-ng1', '/var/log/nginx/cache.log', NginxCacheParser(), NG_CACHE_COLL,),
-    ('us-ng2', '/var/log/nginx/cache.log', NginxCacheParser(), NG_CACHE_COLL,),
-    # ('us-ng1', '/var/log/nginx/error.log', NginxErrorParser(), 'ng_error',),
-    # ('us-ng2', '/var/log/nginx/error.log', NginxErrorParser(), 'ng_error',),
-    # ('us-apa1', '/var/log/http-mydomain.log', ApacheAccessParser(), 'apa_access'),
-    # ('us-apa2', '/var/log/http-mydomain.log', ApacheAccessParser(), 'apa_access'),
-    # ('us-apa3', '/var/log/http-mydomain.log', ApacheAccessParser(), 'apa_access'),
+    ('us-ng1', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
+    ('us-ng2', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
+    # ('us-ng1', '/var/log/nginx/error.log', NginxErrorParser, 'ng_error',),
+    # ('us-ng2', '/var/log/nginx/error.log', NginxErrorParser, 'ng_error',),
+    # ('us-apa1', '/var/log/http-mydomain.log', ApacheAccessParser, 'apa_access'),
+    # ('us-apa2', '/var/log/http-mydomain.log', ApacheAccessParser, 'apa_access'),
+    # ('us-apa3', '/var/log/http-mydomain.log', ApacheAccessParser, 'apa_access'),
 )
 
 # analytics

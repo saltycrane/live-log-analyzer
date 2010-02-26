@@ -2,6 +2,7 @@ from subprocess import Popen, PIPE, STDOUT
 from threading import Thread
 from pymongo import Connection
 from pymongo.errors import CollectionInvalid
+from debuglogging import error
 from settings import MONGODB_NAME, MAX_COLLECTION_SIZE, LOGS
 from util import smart_str
 
@@ -58,7 +59,7 @@ class SourceLog(object):
                 print data['server'], data['time'], data['url']
                 self.mongo.insert(data)
             else:
-                raise Exception(line)
+                error(line)
 
 if __name__ == '__main__':
     main()
