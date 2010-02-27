@@ -1,19 +1,15 @@
 import re
 from pymongo import Connection, ASCENDING
-from settings import MONGODB_NAME
 from util import safe_divide
 
 class BaseAnalyzer(object):
     """Base class not to be used directly.
     """
-    def __init__(self, collection):
-        self.coll = collection
-        self.connect_to_mongo()
-
-    def connect_to_mongo(self):
+    def __init__(self, mongodb_name, collection):
+        # connect to mongodb
         conn = Connection()
-        db = conn[MONGODB_NAME]
-        self.mongo = db[self.coll]
+        db = conn[mongodb_name]
+        self.mongo = db[collection]
 
 class TotalRequests(BaseAnalyzer):
     label = 'Total Requests'
@@ -47,8 +43,8 @@ class CacheHitRate(BaseAnalyzer):
 class DomainRequests(BaseAnalyzer):
     format = '%8d'
 
-    def __init__(self, collection, domain):
-        super(DomainRequests, self).__init__(collection)
+    def __init__(self, mongodb_name, collection, domain):
+        super(DomainRequests, self).__init__(mongodb_name, collection)
         self.label = self.domain = domain
 
     def run(self, time_limit):

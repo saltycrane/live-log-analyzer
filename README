@@ -30,4 +30,3 @@ Problems / Limitations:
  - Leaves "zombie" "tail -f " processes
  - Only works with my custom Nginx log file
  - The field width in the printout is hard-coded at 8 characters
- - There is an import loop in settings.py

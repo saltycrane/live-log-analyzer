@@ -49,8 +49,10 @@ class SourceLog(object):
     def store_data(self):
         while True:
             line = self.stream.readline()
-            # line = unicode(line).encode('utf-8')
             line = smart_str(line)
+            if not line:
+                continue
+
             data = self.parser.parse_line(line)
             if data:
                 data['server'] = self.host

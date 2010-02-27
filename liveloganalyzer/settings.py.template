@@ -1,5 +1,5 @@
-# TODO: There is a messy import loop here
-# TODO: figure out how to instantiate a class programmatically
+from analyzers import TotalRequests, CacheHitRate, DomainRequests
+from parsers import NginxCacheParser, NginxErrorParser, ApacheAccessParser
 
 # mongodb settings
 MONGODB_NAME = 'mydb'
@@ -7,7 +7,6 @@ NG_CACHE_COLL = 'ng_cache'
 MAX_COLLECTION_SIZE = 100 # in megabytes
 
 # source settings
-from parsers import NginxCacheParser, NginxErrorParser, ApacheAccessParser
 LOGS = (
     # (host, log_path, parser, mongodb_collection),
     # ('us-ng1', '/var/log/nginx/error.log', NginxErrorParser, 'ng_error',),
@@ -20,15 +19,14 @@ LOGS = (
 )
 
 # analytics settings
-from analyzers import TotalRequests, CacheHitRate, DomainRequests
 NGINX_CACHE_ANALYSIS_SETTINGS = {
     'windows': (1, 5, 15),    # in minutes
     'interval': 2,            # in seconds
-    'analyzers': (TotalRequests(NG_CACHE_COLL),
-                  CacheHitRate(NG_CACHE_COLL),
-                  DomainRequests(NG_CACHE_COLL, 'domain1.com'),
-                  DomainRequests(NG_CACHE_COLL, 'domain2.com'),
-                  DomainRequests(NG_CACHE_COLL, 'domain3.com'),
+    'analyzers': (TotalRequests(MONGODB_NAME, NG_CACHE_COLL),
+                  CacheHitRate(MONGODB_NAME, NG_CACHE_COLL),
+                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain1.com'),
+                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain2.com'),
+                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain3.com'),
                   ),
     }
 
