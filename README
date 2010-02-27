@@ -7,7 +7,16 @@ What it does (part 1):
 What it does (part 2):
  - Queries MongoDB and prints statistics in real-time
 
-Prerequisites:
+Example results:
+     Stats over the last   1 min   5 min  15 min
+    --------------------------------------------
+          Total Requests     342    1492    4467
+          Cache hit rate    37.4    38.5    38.6
+             domain1.com     284    1270    3751
+             domain2.com      29     103     349
+             domain3.com      24      95     306
+
+Dependencies:
  - MongoDB
  - PyMongo
 
@@ -15,16 +24,10 @@ To use it:
  - Start mongod
  - Copy settings.py.template to settings.py and edit it
  - In first terminal, run "python source.py"
- - In second terminal, run "python analyzer.py"
-
-Example results:
-    Stats over last 60 seconds:
-       Total requests: 0
-       Cache hit rate: 0.0%
-       Domain1: 0
-       Domain2: 0
-       Domain3: 0
+ - In second terminal, run "python executive.py"
 
 Problems / Limitations:
  - Leaves "zombie" "tail -f " processes
  - Only works with my custom Nginx log file
+ - The field width in the printout is hard-coded at 8 characters
+ - There is an import loop in settings.py

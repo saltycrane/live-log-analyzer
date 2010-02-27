@@ -44,6 +44,26 @@ class BaseParser(object):
             return {}
 
 class NginxCacheParser(BaseParser):
+    """Used to parse the following Nginx log format:
+
+    log_format cache '***$time_local '
+                     '[$remote_addr] '
+                     '$upstream_cache_status '
+                     'ups_ad: $upstream_addr '
+                     'ups_st: $upstream_status '
+                     'ups_rt: $upstream_response_time '
+                     'Cache-Control: $upstream_http_cache_control '
+                     'Expires: $upstream_http_expires '
+                     '$host '
+                     '"$request" ($status) '
+                     '"$http_user_agent" '
+                     'Args: $args '
+                     'Media: $media_flag '
+                     'Comment author email: $comment_author_email '
+                     'Comment author: $comment_author '
+                     'Wordpress logged in: $wordpress_logged_in '
+                     ;
+    """
     date_format = "%d/%b/%Y:%H:%M:%S"
     date_ignore_pattern = r' -\d{4}'
     request_pattern = r'(?P<http_method>GET|HEAD|POST) (?P<url>\S+)'

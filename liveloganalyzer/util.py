@@ -1,4 +1,10 @@
 
+def safe_divide(dividend, divisor, dbz=0):
+    if divisor == 0:
+        return dbz
+    else:
+        return dividend/divisor
+
 def smart_str(s, encoding='utf-8', strings_only=False, errors='strict'):
     """
     Modified from http://code.djangoproject.com/browser/django/tags/releases/1.1.1/django/utils/encoding.py

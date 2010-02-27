@@ -1,18 +1,34 @@
-from parsers import NginxCacheParser, NginxErrorParser, ApacheAccessParser
+# TODO: There is a messy import loop here
+# TODO: figure out how to instantiate a class programmatically
 
+# mongodb settings
 MONGODB_NAME = 'mydb'
-MAX_COLLECTION_SIZE = 10000000 # in bytes
 NG_CACHE_COLL = 'ng_cache'
+MAX_COLLECTION_SIZE = 100 # in megabytes
+
+# source settings
+from parsers import NginxCacheParser, NginxErrorParser, ApacheAccessParser
 LOGS = (
     # (host, log_path, parser, mongodb_collection),
-    ('us-ng1', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
-    ('us-ng2', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
     # ('us-ng1', '/var/log/nginx/error.log', NginxErrorParser, 'ng_error',),
     # ('us-ng2', '/var/log/nginx/error.log', NginxErrorParser, 'ng_error',),
-    # ('us-apa1', '/var/log/http-mydomain.log', ApacheAccessParser, 'apa_access'),
-    # ('us-apa2', '/var/log/http-mydomain.log', ApacheAccessParser, 'apa_access'),
-    # ('us-apa3', '/var/log/http-mydomain.log', ApacheAccessParser, 'apa_access'),
+    ('us-ng1', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
+    ('us-ng2', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
+    # ('us-apa1', '/var/log/http-domain1', ApacheAccessParser, 'apa_access'),
+    # ('us-apa2', '/var/log/http-domain1', ApacheAccessParser, 'apa_access'),
+    # ('us-apa3', '/var/log/http-domain1', ApacheAccessParser, 'apa_access'),
 )
 
-# analytics
-DOMAINS =  ['mydomain1.com', 'mydomain2.com', 'mydomain3.com']
+# analytics settings
+from analyzers import TotalRequests, CacheHitRate, DomainRequests
+NGINX_CACHE_ANALYSIS_SETTINGS = {
+    'windows': (1, 5, 15),    # in minutes
+    'interval': 2,            # in seconds
+    'analyzers': (TotalRequests(NG_CACHE_COLL),
+                  CacheHitRate(NG_CACHE_COLL),
+                  DomainRequests(NG_CACHE_COLL, 'domain1.com'),
+                  DomainRequests(NG_CACHE_COLL, 'domain2.com'),
+                  DomainRequests(NG_CACHE_COLL, 'domain3.com'),
+                  ),
+    }
+
