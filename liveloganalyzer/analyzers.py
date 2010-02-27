@@ -1,5 +1,5 @@
 import re
-from pymongo import Connection
+from pymongo import Connection, ASCENDING
 from settings import MONGODB_NAME
 from util import safe_divide
 
@@ -20,6 +20,7 @@ class TotalRequests(BaseAnalyzer):
     format = '%8d'
 
     def run(self, time_limit):
+        self.mongo.ensure_index('time')
         N_requests = self.mongo.find({'time': {'$gt': time_limit}}).count()
         return N_requests
 
@@ -28,6 +29,11 @@ class CacheHitRate(BaseAnalyzer):
     format = '%8.1f'
 
     def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('media', ASCENDING),
+                                 ('status', ASCENDING)])
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('media', ASCENDING)])
         hits = self.mongo.find({'time': {'$gt': time_limit},
                                 'media': '0',
                                 'status': 'HIT',
@@ -46,6 +52,8 @@ class DomainRequests(BaseAnalyzer):
         self.label = self.domain = domain
 
     def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('domain', ASCENDING)])
         hits = self.mongo.find({'time': {'$gt': time_limit},
                                 'domain': re.compile(self.domain),
                                 }).count()
