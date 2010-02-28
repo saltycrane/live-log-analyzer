@@ -1,4 +1,5 @@
-from analyzers import TotalRequests, CacheHitRate, DomainRequests
+from analyzers import (TotalRequests, CacheHitRate, DomainRequests,
+                       Upstream4xxStatus, Upstream5xxStatus, AvgUpstreamResponseTime)
 from parsers import NginxCacheParser, NginxErrorParser, ApacheAccessParser
 
 # mongodb settings
@@ -27,6 +28,8 @@ NGINX_CACHE_ANALYSIS_SETTINGS = {
                   DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain1.com'),
                   DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain2.com'),
                   DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain3.com'),
+                  Upstream4xxStatus(MONGODB_NAME, NG_CACHE_COLL),
+                  Upstream5xxStatus(MONGODB_NAME, NG_CACHE_COLL),
+                  AvgUpstreamResponseTime(MONGODB_NAME, NG_CACHE_COLL),
                   ),
     }
-

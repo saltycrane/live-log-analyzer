@@ -54,3 +54,44 @@ class DomainRequests(BaseAnalyzer):
                                 'domain': re.compile(self.domain),
                                 }).count()
         return hits
+
+class Upstream4xxStatus(BaseAnalyzer):
+    label = 'Upstream 4xx Status'
+    format = '%8d'
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('ups_st', ASCENDING)])
+        N = self.mongo.find({'time': {'$gt': time_limit},
+                             'ups_st': re.compile(r'4\d\d'),
+                             }).count()
+        return N
+
+class Upstream5xxStatus(BaseAnalyzer):
+    label = 'Upstream 5xx Status'
+    format = '%8d'
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('ups_st', ASCENDING)])
+        N = self.mongo.find({'time': {'$gt': time_limit},
+                             'ups_st': re.compile(r'5\d\d'),
+                             }).count()
+        return N
+
+class AvgUpstreamResponseTime(BaseAnalyzer):
+    label = 'Avg response time'
+    format = '%8.3f'
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('ups_rt', ASCENDING)])
+        result = self.mongo.group(
+            key=None,
+            condition={'time': {'$gt': time_limit},
+                       'ups_rt': {'$ne': '-'}},
+            initial={'count': 0, 'total': 0},
+            reduce='function(doc, out) {out.count++; out.total += parseFloat(doc.ups_rt)}',
+            finalize='function(out) {out.avg = out.total / out.count}',
+            )
+        return result[0]['avg']

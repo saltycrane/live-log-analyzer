@@ -10,11 +10,14 @@ What it does (part 2):
 Example results:
      Stats over the last   1 min   5 min  15 min
     --------------------------------------------
-          Total Requests     342    1492    4467
-          Cache hit rate    37.4    38.5    38.6
-             domain1.com     284    1270    3751
-             domain2.com      29     103     349
-             domain3.com      24      95     306
+          Total Requests     193     882    2634
+          Cache hit rate    27.5    28.2    21.2
+             domain1.com     153     692    2086
+             domain2.com      19      91     215
+             domain3.com      20      87     291
+     Upstream 4xx Status       1       4      46
+     Upstream 5xx Status       0       0       0
+       Avg response time   1.380   1.372   1.319
 
 Dependencies:
  - MongoDB
