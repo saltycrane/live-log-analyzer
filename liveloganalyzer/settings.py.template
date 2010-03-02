@@ -1,5 +1,6 @@
-from analyzers import (TotalRequests, CacheHitRate, DomainRequests,
-                       Upstream4xxStatus, Upstream5xxStatus, AvgUpstreamResponseTime)
+from analyzers import (TotalRequests, CacheStatus, CacheStatusAll, DomainRequests,
+                       Upstream4xxStatus, Upstream5xxStatus, AvgUpstreamResponseTime,
+                       )
 from parsers import NginxCacheParser, NginxErrorParser, ApacheAccessParser
 
 # mongodb settings
@@ -21,13 +22,19 @@ LOGS = (
 
 # analytics settings
 NGINX_CACHE_ANALYSIS_SETTINGS = {
-    'windows': (1, 5, 15),    # in minutes
-    'interval': 2,            # in seconds
+    'interval': 2,                 # in seconds
+    'windows': (1, 5, 15),         # in minutes
+    'column_width_data': 18,       # in characters
+    'column_width_label': 24,      # in characters
     'analyzers': (TotalRequests(MONGODB_NAME, NG_CACHE_COLL),
-                  CacheHitRate(MONGODB_NAME, NG_CACHE_COLL),
+                  CacheStatus(MONGODB_NAME, NG_CACHE_COLL, 'HIT', '0'),
+                  CacheStatus(MONGODB_NAME, NG_CACHE_COLL, 'HIT', '1'),
+                  CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'UPDATING'),
+                  CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'STALE'),
                   DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain1.com'),
                   DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain2.com'),
                   DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain3.com'),
+                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain4.net'),
                   Upstream4xxStatus(MONGODB_NAME, NG_CACHE_COLL),
                   Upstream5xxStatus(MONGODB_NAME, NG_CACHE_COLL),
                   AvgUpstreamResponseTime(MONGODB_NAME, NG_CACHE_COLL),
