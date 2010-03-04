@@ -55,10 +55,8 @@ class SourceLog(object):
 
             data = self.parser.parse_line(line)
             if data:
+                print self.host, self.filepath, data['time']
                 data['server'] = self.host
-                if 'url' not in data:
-                    data['url'] = '-'
-                print data['server'], data['time'], data['url']
                 try:
                     self.mongo.insert(data)
                 except InvalidStringData, e:

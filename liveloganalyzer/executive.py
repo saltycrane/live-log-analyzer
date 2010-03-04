@@ -1,10 +1,10 @@
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
-from settings import NGINX_CACHE_ANALYSIS_SETTINGS
+from settings import MYCOMPANY_ANALYSIS_SETTINGS
 
 def main():
-    Executive(NGINX_CACHE_ANALYSIS_SETTINGS).loop()
+    Executive(MYCOMPANY_ANALYSIS_SETTINGS).loop()
 
 class Executive(object):
     def __init__(self, settings):
@@ -22,8 +22,12 @@ class Executive(object):
             time.sleep(self.interval)
 
     def calc_time_windows(self):
+        """Return a list of 2-tuples containing the lower and upper time limits
+        specified as datetime objects.
+        """
         now = datetime.now()
-        self.time_limits = [now - timedelta(minutes=window) for window in self.windows]
+        self.time_limits = [(now - timedelta(minutes=window), now)
+                            for window in self.windows]
 
     def analyze(self):
         self.data = defaultdict(list)
@@ -33,7 +37,7 @@ class Executive(object):
                 self.data[a.label].append(d)
 
     def print_stats(self):
-        format_label = "%%%ds" % self.column_width_label
+        format_label = "%%-%ds" % self.column_width_label
         format_data = "%%%ds" % self.column_width_data
         print
         print "".join([format_label % "Stats over the last"] +

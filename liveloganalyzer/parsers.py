@@ -30,7 +30,8 @@ class BaseParser(object):
     def convert_time(cls, time_str):
         """Convert date string to datetime object
         """
-        time_str = re.sub(cls.date_ignore_pattern, '', time_str)
+        if cls.date_ignore_pattern:
+            time_str = re.sub(cls.date_ignore_pattern, '', time_str)
         return datetime.strptime(time_str, cls.date_format)
 
     @classmethod
@@ -89,8 +90,16 @@ class NginxCacheParser(BaseParser):
 
 class NginxErrorParser(BaseParser):
     date_format = "%Y/%m/%d %H:%M:%S"
-    pattern = ''.join([
-            r'^(?P<time>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) ',
+    pattern = ' '.join([
+            r'^(?P<time>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})',
+            r'\[(?P<level>.*)\]',
+            ])
+
+class PhpErrorParser(BaseParser):
+    date_format = "%d-%b-%Y %H:%M:%S"
+    pattern = ' '.join([
+            r'^\[(?P<time>.*)\]',
+            r'(?P<therest>.*)',
             ])
 
 class ApacheAccessParser(BaseParser):

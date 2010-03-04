@@ -1,42 +1,74 @@
-from analyzers import (TotalRequests, CacheStatus, CacheStatusAll, DomainRequests,
+from analyzers import (CacheStatus, CacheStatusAll, DomainRequests,
                        Upstream4xxStatus, Upstream5xxStatus, AvgUpstreamResponseTime,
+                       GenericCount, AvgUpstreamResponseTimePerServer, Heading,
                        )
-from parsers import NginxCacheParser, NginxErrorParser, ApacheAccessParser
+from parsers import (NginxCacheParser, NginxErrorParser, ApacheAccessParser,
+                     PhpErrorParser,
+                     )
 
 # mongodb settings
 MONGODB_NAME = 'mydb'
 NG_CACHE_COLL = 'ng_cache'
+NG_ERROR_COLL = 'ng_error'
+APA_ERROR_COLL = 'apa_error'
+PHP_ERROR_COLL = 'php_error'
 MAX_COLLECTION_SIZE = 100 # in megabytes
 
 # source settings
 LOGS = (
     # (host, log_path, parser, mongodb_collection),
-    # ('us-ng1', '/var/log/nginx/error.log', NginxErrorParser, 'ng_error',),
-    # ('us-ng2', '/var/log/nginx/error.log', NginxErrorParser, 'ng_error',),
     ('us-ng1', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
     ('us-ng2', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
-    # ('us-apa1', '/var/log/http-domain1', ApacheAccessParser, 'apa_access'),
-    # ('us-apa2', '/var/log/http-domain1', ApacheAccessParser, 'apa_access'),
-    # ('us-apa3', '/var/log/http-domain1', ApacheAccessParser, 'apa_access'),
+    ('us-ng1', '/var/log/nginx/error.log', NginxErrorParser, NG_ERROR_COLL,),
+    ('us-ng2', '/var/log/nginx/error.log', NginxErrorParser, NG_ERROR_COLL,),
+    # ('us-apa1', '/var/log/apache2/error.log', NoParser, APA_ERROR_COLL,),
+    # ('us-apa2', '/var/log/apache2/error.log', NoParser, APA_ERROR_COLL,),
+    # ('us-apa3', '/var/log/apache2/error.log', NoParser, APA_ERROR_COLL,),
+    ('us-apa1', '/var/log/PHP_errors.log', PhpErrorParser, PHP_ERROR_COLL,),
+    ('us-apa2', '/var/log/PHP_errors.log', PhpErrorParser, PHP_ERROR_COLL,),
+    ('us-apa3', '/var/log/PHP_errors.log', PhpErrorParser, PHP_ERROR_COLL,),
+    # ('us-apa1', '/var/log/http-asdf', ApacheAccessParser, 'apa_access'),
+    # ('us-apa2', '/var/log/http-asdf', ApacheAccessParser, 'apa_access'),
+    # ('us-apa3', '/var/log/http-asdf', ApacheAccessParser, 'apa_access'),
 )
 
 # analytics settings
-NGINX_CACHE_ANALYSIS_SETTINGS = {
+MYCOMPANY_ANALYSIS_SETTINGS = {
     'interval': 2,                 # in seconds
     'windows': (1, 5, 15),         # in minutes
-    'column_width_data': 18,       # in characters
-    'column_width_label': 24,      # in characters
-    'analyzers': (TotalRequests(MONGODB_NAME, NG_CACHE_COLL),
-                  CacheStatus(MONGODB_NAME, NG_CACHE_COLL, 'HIT', '0'),
-                  CacheStatus(MONGODB_NAME, NG_CACHE_COLL, 'HIT', '1'),
-                  CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'UPDATING'),
-                  CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'STALE'),
-                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain1.com'),
-                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain2.com'),
-                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain3.com'),
-                  DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'domain4.net'),
-                  Upstream4xxStatus(MONGODB_NAME, NG_CACHE_COLL),
-                  Upstream5xxStatus(MONGODB_NAME, NG_CACHE_COLL),
-                  AvgUpstreamResponseTime(MONGODB_NAME, NG_CACHE_COLL),
-                  ),
+    'column_width_data': 20,       # in characters
+    'column_width_label': 20,      # in characters
+    'analyzers': (
+        # Nginx cache log
+        Heading('Requests (N)'),
+        GenericCount(MONGODB_NAME, NG_CACHE_COLL, 'Total requests'),
+        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf.com'),
+        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf1.com'),
+        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf2.com'),
+        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf3.net'),
+
+        Heading('Cache status (%)'),
+        CacheStatus(MONGODB_NAME, NG_CACHE_COLL, 'HIT', '0'),
+        CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'UPDATING'),
+        CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'STALE'),
+
+        Heading('Upstream HTTP status (N)'),
+        Upstream4xxStatus(MONGODB_NAME, NG_CACHE_COLL),
+        Upstream5xxStatus(MONGODB_NAME, NG_CACHE_COLL),
+
+        Heading('Avg upstream response time (secs)'),
+        AvgUpstreamResponseTimePerServer(MONGODB_NAME, NG_CACHE_COLL, '10.111.111.130:80'),
+        AvgUpstreamResponseTimePerServer(MONGODB_NAME, NG_CACHE_COLL, '10.111.111.241:80'),
+        AvgUpstreamResponseTimePerServer(MONGODB_NAME, NG_CACHE_COLL, '10.111.111.209:80'),
+
+        Heading('Error logs (N)'),
+        # Nginx error log
+        GenericCount(MONGODB_NAME, NG_ERROR_COLL, 'Nginx error count'),
+
+        # # Apache error log
+        # GenericCount(MONGODB_NAME, APA_ERROR_COLL, 'Apache error count'),
+
+        # PHP error log
+        GenericCount(MONGODB_NAME, PHP_ERROR_COLL, 'PHP error count'),
+        ),
     }
