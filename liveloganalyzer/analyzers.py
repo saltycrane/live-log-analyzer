@@ -30,6 +30,17 @@ class GenericCount(BaseAnalyzer):
 
         return '%d' % N
 
+class RequestsPerMinute(BaseAnalyzer):
+    label = '  Total req/min'
+
+    def run(self, time_limit):
+        self.mongo.ensure_index('time')
+        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]}}
+                            ).count()
+        td = time_limit[1] - time_limit[0]
+
+        return '%.0f' % (60.0 * float(N) / td.seconds)
+
 class CacheStatus(BaseAnalyzer):
     def __init__(self, mongodb_name, collection, status, media):
         super(CacheStatus, self).__init__(mongodb_name, collection)
@@ -75,19 +86,21 @@ class CacheStatusAll(BaseAnalyzer):
 
         return '%.2f%% (%d/%d)' % (perc, count, total)
 
-class DomainRequests(BaseAnalyzer):
+class DomainRequestsPerMinute(BaseAnalyzer):
     def __init__(self, mongodb_name, collection, domain):
-        super(DomainRequests, self).__init__(mongodb_name, collection)
+        super(DomainRequestsPerMinute, self).__init__(mongodb_name, collection)
         self.domain = domain
         self.label = '  ' + domain
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
                                  ('domain', ASCENDING)])
-        hits = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
-                                'domain': re.compile(self.domain),
-                                }).count()
-        return '%d' % hits
+        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                             'domain': re.compile(self.domain),
+                             }).count()
+        td = time_limit[1] - time_limit[0]
+
+        return '%.0f' % (60.0 * float(N) / td.seconds)
 
 class Upstream4xxStatus(BaseAnalyzer):
     label = '  4xx status'

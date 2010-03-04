@@ -42,7 +42,7 @@ class SourceLog(object):
         """Tail -f the remote file.
         Sets self.stream, a file object of the stdout+stderr.
         """
-        cmd = 'ssh -f %s tail -f %s' % (self.host, self.filepath)
+        cmd = 'ssh -f %s tail --follow=name %s' % (self.host, self.filepath)
         p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
         self.stream = p.stdout
 

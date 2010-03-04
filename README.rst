@@ -1,7 +1,7 @@
 
 What it does (part 1)
 ---------------------
-- Creates processes that ssh to a remote host and run "tail -f" on the log file
+- Creates processes that ssh to a remote host and run "tail --follow=name" on the log file
 - Parses the log file using Regular Expressions
 - Stores the data in MongoDB
 
@@ -13,26 +13,26 @@ Example results::
 
     Stats over the last                1 min               5 min              15 min
     --------------------------------------------------------------------------------
-    Requests (N)                                                                    
-      Total requests                    1154                5906               18061
-      asdf.com                           647                3356               10185
-      asdf1.com                           26                 119                 426
-      asdf2.com                           37                 175                 471
-      asdf3.net                          441                2225                6885
+    Requests per minute                                                             
+      Total req/min                      734                 535                 699
+      asdf.com                           413                 276                 370
+      asdf1.com                           25                  27                  27
+      asdf2.com                           13                  13                  21
+      asdf3.net                          277                 216                 276
     Cache status (%)                                                                
-      HIT (media: 0)         50.6% (164/324)    52.6% (861/1638)   54.5% (2705/4961)
-      UPDATING (all)          0.00% (0/1180)      0.03% (2/5932)    0.06% (11/18087)
-      STALE (all)             0.00% (0/1191)      0.00% (0/5943)     0.00% (0/18098)
+      HIT (media: 0)         49.8% (120/241)     49.7% (380/764)   47.5% (1588/3344)
+      UPDATING (all)           0.00% (0/734)      0.00% (0/2676)    0.25% (26/10482)
+      STALE (all)              0.00% (0/734)      0.00% (0/2676)     0.00% (0/10482)
     Upstream HTTP status (N)                                                            
-      4xx status                          10                  28                  79
+      4xx status                           6                  16                  59
       5xx status                           0                   0                   0
     Avg upstream response time (secs)                                                            
-      10.111.111.130:80           1.858 (50)         2.156 (228)         1.676 (748)
-      10.111.111.241:80           1.150 (54)         1.303 (281)         1.261 (737)
-      10.111.111.209:80           1.165 (46)         1.041 (235)         1.060 (726)
+      10.111.111.130:80           1.602 (66)         1.760 (173)         2.244 (804)
+      10.111.111.241:80           0.593 (37)         0.891 (116)         1.057 (453)
+      10.111.111.209:80           0.733 (23)          0.998 (98)         1.056 (462)
     Error logs (N)                                                                  
       Nginx error count                    0                   0                   0
-      PHP error count                      0                   1                   2
+      PHP error count                      0                   0                   2
 
 Dependencies
 ------------
@@ -48,5 +48,9 @@ To use it
 
 Problems / Limitations
 ----------------------
-- Leaves "zombie" "tail -f " processes
+- Leaves "zombie" "tail --follow=name " processes
 - Only works with my custom Nginx log file
+
+Plans
+-----
+- Add a web UI using Orbited, MorbidQ, js.io, Twisted, etc.

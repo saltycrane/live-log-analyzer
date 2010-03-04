@@ -1,4 +1,4 @@
-from analyzers import (CacheStatus, CacheStatusAll, DomainRequests,
+from analyzers import (RequestsPerMinute, CacheStatus, CacheStatusAll, DomainRequestsPerMinute,
                        Upstream4xxStatus, Upstream5xxStatus, AvgUpstreamResponseTime,
                        GenericCount, AvgUpstreamResponseTimePerServer, Heading,
                        )
@@ -12,7 +12,7 @@ NG_CACHE_COLL = 'ng_cache'
 NG_ERROR_COLL = 'ng_error'
 APA_ERROR_COLL = 'apa_error'
 PHP_ERROR_COLL = 'php_error'
-MAX_COLLECTION_SIZE = 100 # in megabytes
+MAX_COLLECTION_SIZE = 50 # in megabytes
 
 # source settings
 LOGS = (
@@ -40,12 +40,12 @@ MYCOMPANY_ANALYSIS_SETTINGS = {
     'column_width_label': 20,      # in characters
     'analyzers': (
         # Nginx cache log
-        Heading('Requests (N)'),
-        GenericCount(MONGODB_NAME, NG_CACHE_COLL, 'Total requests'),
-        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf.com'),
-        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf1.com'),
-        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf2.com'),
-        DomainRequests(MONGODB_NAME, NG_CACHE_COLL, 'asdf3.net'),
+        Heading('Requests per minute'),
+        RequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL),
+        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf.com'),
+        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf1.com'),
+        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf2.com'),
+        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf3.net'),
 
         Heading('Cache status (%)'),
         CacheStatus(MONGODB_NAME, NG_CACHE_COLL, 'HIT', '0'),
