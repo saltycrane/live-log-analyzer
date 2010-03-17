@@ -1,3 +1,16 @@
+import time
+from pytz import timezone
+
+def transpose_list_of_lists(lol):
+    return [list(newinner) for newinner in map(None, *lol)]
+
+def convert_time_for_flot(dt_obj):
+    """Given datetime object, return a timestamp required for the jquery flot library
+    """
+    dt_obj_utc_fake = dt_obj.replace(tzinfo=timezone('UTC'))
+    dt_obj_pacific_fake = dt_obj_utc_fake.astimezone(timezone('US/Pacific'))
+    timestamp = 1000.0 * time.mktime(dt_obj_pacific_fake.timetuple())
+    return timestamp
 
 def safe_divide(dividend, divisor, dbz=0):
     if divisor == 0:

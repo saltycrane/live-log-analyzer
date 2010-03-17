@@ -6,3 +6,11 @@ settings.py
 tests.py
 create_readme.py
 README.us.rst
+virtenv
+mongodb
+mongodb_data/
+mongodb-linux*/
+bin/
+TODO.rst
+reportgenerators_search.py
+staticmedia/flot/

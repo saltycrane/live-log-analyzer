@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link href="http://localhost:9000/mystatic/style.css" rel="stylesheet" type="text/css" />
+
+  <!-- Jquery flot plotting stuff -->
+  <!--[if IE]><script language="javascript" type="text/javascript" src="flot/excanvas.min.js"></script><![endif]--> 
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://localhost:9000/mystatic/flot/jquery.flot.js"></script>
+  <script type="text/javascript" src="http://localhost:9000/mystatic/flot/jquery.flot.stack.js"></script>
+
+  <!-- Orbited/Stomp stuff -->
+  <script src="http://localhost:9000/static/Orbited.js"></script>
+  <script>
+    TCPSocket = Orbited.TCPSocket;
+  </script>
+  <script src="http://localhost:9000/static/protocols/stomp/stomp.js"></script>
+
+  <!-- my script -->
+  <script src="http://localhost:9000/mystatic/script.js"></script>
+
+  <title>Orbited + Morbid + js.io Graph</title>
+</head>
+<body>
+  <div id="container1">
+  </div>
+</body>
+</html>

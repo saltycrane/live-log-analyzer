@@ -1,74 +1,101 @@
-from analyzers import (RequestsPerMinute, CacheStatus, CacheStatusAll, DomainRequestsPerMinute,
-                       Upstream4xxStatus, Upstream5xxStatus, AvgUpstreamResponseTime,
-                       GenericCount, AvgUpstreamResponseTimePerServer, Heading,
-                       )
-from parsers import (NginxCacheParser, NginxErrorParser, ApacheAccessParser,
-                     PhpErrorParser,
-                     )
+"""
+Important note: the name of the mongoDB "collection" is what links a "source"
+with an "analyzer". So for an analyzer to use the data from a source, the name
+of the collection must be the same in SOURCES_SETTINGS and ANALYSIS_SETTINGS.
+"""
 
-# mongodb settings
+from sources import SourceLog
+from parsers import NginxCacheParser
+from analyzers import (CacheStatus,
+                       Upstream5xxStatus,
+                       AvgUpstreamResponseTimePerServer,
+                       RequestsPerMinuteByType,
+                       )
 MONGODB_NAME = 'mydb'
+PROCESSED_COLL = 'processed'
+PROCESSED_MAX_SIZE = 1 # in megabytes
 NG_CACHE_COLL = 'ng_cache'
-NG_ERROR_COLL = 'ng_error'
-APA_ERROR_COLL = 'apa_error'
-PHP_ERROR_COLL = 'php_error'
 MAX_COLLECTION_SIZE = 50 # in megabytes
 
-# source settings
-LOGS = (
-    # (host, log_path, parser, mongodb_collection),
-    ('us-ng1', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
-    ('us-ng2', '/var/log/nginx/cache.log', NginxCacheParser, NG_CACHE_COLL,),
-    ('us-ng1', '/var/log/nginx/error.log', NginxErrorParser, NG_ERROR_COLL,),
-    ('us-ng2', '/var/log/nginx/error.log', NginxErrorParser, NG_ERROR_COLL,),
-    # ('us-apa1', '/var/log/apache2/error.log', NoParser, APA_ERROR_COLL,),
-    # ('us-apa2', '/var/log/apache2/error.log', NoParser, APA_ERROR_COLL,),
-    # ('us-apa3', '/var/log/apache2/error.log', NoParser, APA_ERROR_COLL,),
-    ('us-apa1', '/var/log/PHP_errors.log', PhpErrorParser, PHP_ERROR_COLL,),
-    ('us-apa2', '/var/log/PHP_errors.log', PhpErrorParser, PHP_ERROR_COLL,),
-    ('us-apa3', '/var/log/PHP_errors.log', PhpErrorParser, PHP_ERROR_COLL,),
-    # ('us-apa1', '/var/log/http-asdf', ApacheAccessParser, 'apa_access'),
-    # ('us-apa2', '/var/log/http-asdf', ApacheAccessParser, 'apa_access'),
-    # ('us-apa3', '/var/log/http-asdf', ApacheAccessParser, 'apa_access'),
-)
+SOURCES_SETTINGS = [
+    {'collection': NG_CACHE_COLL,
+     'source': (SourceLog, {'host': 'us-ng1',
+                            'filepath': '/var/log/nginx/cache.log'}),
+     'parser': NginxCacheParser,
+     },
+    {'collection': NG_CACHE_COLL,
+     'source': (SourceLog, {'host': 'us-ng1',
+                            'filepath': '/var/log/nginx/cache.log'}),
+     'parser': NginxCacheParser,
+     },
+    ]
 
-# analytics settings
-MYCOMPANY_ANALYSIS_SETTINGS = {
-    'interval': 2,                 # in seconds
-    'windows': (1, 5, 15),         # in minutes
-    'column_width_data': 20,       # in characters
-    'column_width_label': 20,      # in characters
-    'analyzers': (
-        # Nginx cache log
-        Heading('Requests per minute'),
-        RequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL),
-        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf.com'),
-        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf1.com'),
-        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf2.com'),
-        DomainRequestsPerMinute(MONGODB_NAME, NG_CACHE_COLL, 'asdf3.net'),
-
-        Heading('Cache status (%)'),
-        CacheStatus(MONGODB_NAME, NG_CACHE_COLL, 'HIT', '0'),
-        CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'UPDATING'),
-        CacheStatusAll(MONGODB_NAME, NG_CACHE_COLL, 'STALE'),
-
-        Heading('Upstream HTTP status (N)'),
-        Upstream4xxStatus(MONGODB_NAME, NG_CACHE_COLL),
-        Upstream5xxStatus(MONGODB_NAME, NG_CACHE_COLL),
-
-        Heading('Avg upstream response time (secs)'),
-        AvgUpstreamResponseTimePerServer(MONGODB_NAME, NG_CACHE_COLL, '10.111.111.130:80'),
-        AvgUpstreamResponseTimePerServer(MONGODB_NAME, NG_CACHE_COLL, '10.111.111.241:80'),
-        AvgUpstreamResponseTimePerServer(MONGODB_NAME, NG_CACHE_COLL, '10.111.111.209:80'),
-
-        Heading('Error logs (N)'),
-        # Nginx error log
-        GenericCount(MONGODB_NAME, NG_ERROR_COLL, 'Nginx error count'),
-
-        # # Apache error log
-        # GenericCount(MONGODB_NAME, APA_ERROR_COLL, 'Apache error count'),
-
-        # PHP error log
-        GenericCount(MONGODB_NAME, PHP_ERROR_COLL, 'PHP error count'),
-        ),
+ANALYSIS_SETTINGS = {
+    'channel_name': '/topic/graph',
+    'interval': 20,                 # in seconds
+    'history_length': 120,        # number of processed data points to save
+    'default_window_length': 30,        # in seconds
+    'default_flot_options': {
+        'series': {'stack': 0,
+                   'bars': {'show': True, 'barWidth': 18000, 'lineWidth': 1,},},
+        'xaxis': {'mode': "time",
+                  'timeformat': "%H:%M",},
+        },
+    'groups': {
+        'rpm': {
+            'label': 'Requests/min',
+            'format': '%d',
+            'collection': NG_CACHE_COLL,
+            'window_length': 120,
+            'analyzers': [
+                (RequestsPerMinuteByType, {'media': '1'}),
+                (RequestsPerMinuteByType, {'media': '0'}),
+                ],
+            },
+        'cache0': {
+            'label': 'Cache status (non-media)',
+            'format': '%.1f%%',
+            'collection': NG_CACHE_COLL,
+            'flot_options': {'yaxis': {'max': 100,},},
+            'analyzers': [
+                (CacheStatus, {'status': 'HIT', 'media': '0'}),
+                (CacheStatus, {'status': 'MISS', 'media': '0'}),
+                (CacheStatus, {'status': 'EXPIRED', 'media': '0'}),
+                (CacheStatus, {'status': 'UPDATING', 'media': '0'}),
+                (CacheStatus, {'status': 'STALE', 'media': '0'}),
+                ],
+            },
+        'cache1': {
+            'label': 'Cache status (media)',
+            'format': '%.1f%%',
+            'collection': NG_CACHE_COLL,
+            'flot_options': {'yaxis': {'max': 100,},},
+            'analyzers': [
+                (CacheStatus, {'status': 'HIT', 'media': '1'}),
+                (CacheStatus, {'status': 'MISS', 'media': '1'}),
+                (CacheStatus, {'status': 'EXPIRED', 'media': '1'}),
+                (CacheStatus, {'status': 'UPDATING', 'media': '1'}),
+                (CacheStatus, {'status': 'STALE', 'media': '1'}),
+                ],
+            },
+        'http_status': {
+            'label': 'HTTP Status',
+            'format': '%d',
+            'collection': NG_CACHE_COLL,
+            'flot_options': {'yaxis': {'min': 0,},},
+            'analyzers': [
+                (Upstream5xxStatus, {}),
+                ],
+            },
+        'aurt': {
+            'label': 'Avg Upstream Resp Time',
+            'format': '%.2f',
+            'collection': NG_CACHE_COLL,
+            'analyzers': [
+                (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.241:80'}),
+                (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.210:80'}),
+                (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.173:80'}),
+                ],
+            },
+        },
     }

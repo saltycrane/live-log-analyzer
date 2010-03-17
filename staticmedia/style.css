@@ -1,0 +1,34 @@
+body, html, h1 {
+    font-family: sans-serif;
+    background-color: #f3ffe2;
+}
+h1, h2 {
+    margin: 0px;
+}
+
+/* new */
+#container1 {
+}
+.label {
+}
+.plot {
+    float: left;
+    position: relative;
+    margin: auto;
+    border: 1px solid #444;
+    width: 720px;
+    height: 120px;
+    background-color: #fff;
+}
+.bar {
+    /* background-color: #38f; */
+    background-color: red;
+    height: 200px;
+    width: 3px;
+    margin: 0px 0px;
+    float: left;
+    position: absolute;
+}
+.value {
+    float: left;
+}

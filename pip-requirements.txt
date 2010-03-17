@@ -1,0 +1,6 @@
+pymongo
+Twisted==9.0.0
+orbited
+stompservice
+simplejson
+pytz
