@@ -1,4 +1,4 @@
-var keys = ['rpm', 'cache0', 'cache1', 'http_status', 'aurt',
+var keys = ['rpm', 'cache0', 'cache1', 'http_status', 'aurt', 'mysql',
             ];
 
 var init_all = function() {

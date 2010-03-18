@@ -5,7 +5,6 @@ from pymongo import Connection
 from pymongo.errors import CollectionInvalid, InvalidStringData
 from debuglogging import error
 from settings import MONGODB_NAME, MAX_COLLECTION_SIZE, SOURCES_SETTINGS
-from util import smart_str
 
 def main():
     for ss in SOURCES_SETTINGS:
@@ -25,13 +24,13 @@ class SourceExecutive(object):
         self.kwargs = settings['source'][1]
 
     def start(self):
-        self.start_source()
+        self.start_source_stream()
         self.connect_to_mongo()
         self.store_data()
 
-    def start_source(self):
+    def start_source_stream(self):
         self.source = self.source_class(**self.kwargs)
-        self.stream = self.source.get_stream()
+        self.source.start_stream()
 
     def connect_to_mongo(self):
         conn = Connection()
@@ -44,11 +43,7 @@ class SourceExecutive(object):
 
     def store_data(self):
         while True:
-            line = self.stream.readline()
-            line = smart_str(line)
-            if not line:
-                continue
-
+            line = self.source.get_line()
             data = self.parser.parse_line(line)
             if data:
                 data['server'] = self.source.host

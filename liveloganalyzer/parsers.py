@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from pprint import pprint
 
 class BaseParser(object):
     """Base class not to be used directly.
@@ -7,7 +8,6 @@ class BaseParser(object):
     pattern = None
     date_format = None
     date_ignore_pattern = None
-    request_pattern = None
 
     @classmethod
     def parse_line(cls, line):
@@ -17,11 +17,11 @@ class BaseParser(object):
         m = regex.search(line)
         if m:
             data = m.groupdict()
-            if cls.request_pattern:
-                newdata = cls.parse_request_field(data['request'])
-                data.update(newdata)
+            data = cls.post_process(data)
             if cls.date_format:
                 data['time'] = cls.convert_time(data['time'])
+            else:
+                data['time'] = datetime.now()
             return data
         else:
             return {}
@@ -35,14 +35,10 @@ class BaseParser(object):
         return datetime.strptime(time_str, cls.date_format)
 
     @classmethod
-    def parse_request_field(cls, req_str):
-        """Convert request string into http method and url
+    def post_process(cls, data):
+        """Implement this in the subclass. Accept/return parsed data structure.
         """
-        m = re.search(cls.request_pattern, req_str)
-        if m:
-            return m.groupdict()
-        else:
-            return {}
+        return data
 
 class NginxCacheParser(BaseParser):
     """Used to parse the following Nginx log format:
@@ -67,7 +63,6 @@ class NginxCacheParser(BaseParser):
     """
     date_format = "%d/%b/%Y:%H:%M:%S"
     date_ignore_pattern = r' -\d{4}'
-    request_pattern = r'(?P<http_method>GET|HEAD|POST) (?P<url>\S+)'
     pattern = ' '.join([
             r'\*\*\*(?P<time>\S+ -\d{4})',
             r'\[(?P<ip>[\d\.]+)\]',
@@ -87,6 +82,18 @@ class NginxCacheParser(BaseParser):
             r'Comment author: (?P<com_author>.*)',
             r'Wordpress logged in: (?P<wp_login>.*)',
             ])
+
+    @classmethod
+    def post_process(cls, data):
+        """Convert request string into http method and url
+        """
+        request_string = data['request']
+        request_pattern = r'(?P<http_method>GET|HEAD|POST) (?P<url>\S+)'
+        m = re.search(request_pattern, request_string)
+        if m:
+            newdata = m.groupdict()
+            data.update(newdata)
+        return data
 
 class NginxErrorParser(BaseParser):
     date_format = "%Y/%m/%d %H:%M:%S"
@@ -112,3 +119,50 @@ class ApacheAccessParser(BaseParser):
             r'.* ',
             r'\[(?P<time>\d+/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} -\d{4})\] ',
             ])
+
+class MysqladminExtendedRelativeParser(BaseParser):
+    """For use with MysqladminExtendedRelativeSource
+    Assumes -i parameter is 10
+    Return data in counts per second
+    """
+    pattern = ' '.join([
+            r'(',
+            r'.*Questions\s*\|\s*(?P<questions_persecond>\d+).*',
+            r'|',
+            r'.*Slow_queries\s*\|\s*(?P<slow_queries_persecond>\d+).*',
+            r')',
+            ])
+
+    @classmethod
+    def post_process(cls, data):
+        """Divide counts by uptime to get counts per second
+        """
+        # TODO: don't hardcode UPTIME to 10.0
+        # This parameter is tied to the -i parameter in MysqladminExtendedRelativeSource
+        # Maybe need to combine "sources" and "parsers" classes
+        UPTIME = 10.0
+        data = dict([(k, v) for k, v in data.iteritems() if v])
+        return dict([
+                (k, int(v)/UPTIME)
+                for k, v in data.iteritems()
+                if '_persecond' in k
+                ])
+
+class MysqladminExtendedAbsoluteParser(BaseParser):
+    """For use with MysqladminExtendedAbsoluteSource
+    """
+    pattern = ' '.join([
+            r'(',
+            r'.*Slave_running\s*\|\s*(?P<slave_running>\S+).*',
+            r'|',
+            r'.*Threads_connected\s*\|\s*(?P<threads_connected>\d+).*',
+            r'|',
+            r'.*Threads_running\s*\|\s*(?P<threads_running>\d+).*',
+            r')',
+            ])
+
+    @classmethod
+    def post_process(cls, data):
+        """Remove empty values
+        """
+        return dict([(k, v) for k, v in data.iteritems() if v])

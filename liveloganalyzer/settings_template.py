@@ -4,17 +4,21 @@ with an "analyzer". So for an analyzer to use the data from a source, the name
 of the collection must be the same in SOURCES_SETTINGS and ANALYSIS_SETTINGS.
 """
 
-from sources import SourceLog
-from parsers import NginxCacheParser
-from analyzers import (CacheStatus,
-                       Upstream5xxStatus,
-                       AvgUpstreamResponseTimePerServer,
-                       RequestsPerMinuteByType,
+from sources import (SourceLog, MysqladminExtendedRelativeSource,
+                     MysqladminExtendedAbsoluteSource,
+                     )
+from parsers import (NginxCacheParser, MysqladminExtendedRelativeParser,
+                     MysqladminExtendedAbsoluteParser,
+                     )
+from analyzers import (CacheStatus, Upstream5xxStatus, AvgUpstreamResponseTimePerServer,
+                       RequestsPerMinuteByType, MysqlQuestionsPerSecond,
+                       MysqlSlowQueriesPerSecond,
                        )
 MONGODB_NAME = 'mydb'
 PROCESSED_COLL = 'processed'
 PROCESSED_MAX_SIZE = 1 # in megabytes
 NG_CACHE_COLL = 'ng_cache'
+MYSQL_COLL = 'mysql_extended'
 MAX_COLLECTION_SIZE = 50 # in megabytes
 
 SOURCES_SETTINGS = [
@@ -28,16 +32,24 @@ SOURCES_SETTINGS = [
                             'filepath': '/var/log/nginx/cache.log'}),
      'parser': NginxCacheParser,
      },
+    {'collection': MYSQL_COLL,
+     'source': (MysqladminExtendedRelativeSource, {'host': 'us-my1',},),
+     'parser': MysqladminExtendedRelativeParser,
+     },
+    {'collection': MYSQL_COLL,
+     'source': (MysqladminExtendedRelativeSource, {'host': 'us-my2',},),
+     'parser': MysqladminExtendedRelativeParser,
+     },
     ]
 
 ANALYSIS_SETTINGS = {
     'channel_name': '/topic/graph',
-    'interval': 20,                 # in seconds
+    'interval': 60,                 # in seconds
     'history_length': 120,        # number of processed data points to save
-    'default_window_length': 30,        # in seconds
+    'default_window_length': 65,        # in seconds
     'default_flot_options': {
         'series': {'stack': 0,
-                   'bars': {'show': True, 'barWidth': 18000, 'lineWidth': 1,},},
+                   'bars': {'show': True, 'barWidth': 60*0.8*1000, 'lineWidth': 1,},},
         'xaxis': {'mode': "time",
                   'timeformat': "%H:%M",},
         },
@@ -95,6 +107,15 @@ ANALYSIS_SETTINGS = {
                 (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.241:80'}),
                 (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.210:80'}),
                 (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.173:80'}),
+                ],
+            },
+        'mysql': {
+            'label': 'MySQL Questions/sec',
+            'format': '%.1f',
+            'collection': MYSQL_COLL,
+            'analyzers': [
+                (MysqlQuestionsPerSecond, {'server': 'us-my1'}),
+                (MysqlQuestionsPerSecond, {'server': 'us-my2'}),
                 ],
             },
         },

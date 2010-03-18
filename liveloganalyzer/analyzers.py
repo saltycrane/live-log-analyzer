@@ -1,4 +1,5 @@
 import re
+from pprint import pprint
 from pymongo import Connection, ASCENDING
 from util import safe_divide
 
@@ -84,3 +85,59 @@ class AvgUpstreamResponseTimePerServer(object):
         else:
             self.data = 0.0
 
+class MysqlQuestionsPerSecond(object):
+    def __init__(self, mongo_collection, server):
+        self.mongo = mongo_collection
+        self.label = 'Questions/sec'
+        self.key = 'qps'
+        self.server = server # master or slave (e.g. us-my1 or us-my2)
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('questions_persecond', ASCENDING)])
+        result = self.mongo.group(
+            key=None,
+            condition={'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                       # 'questions_persecond': {'$exists': 'true'}, # this doesnt work
+                       'questions_persecond': {'$gt': 0},
+                       'server': self.server,
+                       },
+            initial={'count': 0, 'total': 0},
+            reduce='''function(doc, out) {
+                         out.count++;
+                         out.total += parseFloat(doc.questions_persecond)
+                      }''',
+            finalize='function(out) {out.avg = out.total / out.count}',
+            )
+        if result:
+            self.data = result[0]['avg']
+        else:
+            self.data = 0
+
+class MysqlSlowQueriesPerSecond(object):
+    def __init__(self, mongo_collection, server):
+        self.mongo = mongo_collection
+        self.label = 'Slow queries/sec'
+        self.key = 'sqps'
+        self.server = server # master or slave (e.g. us-my1 or us-my2)
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('slow_queries_persecond', ASCENDING)])
+        result = self.mongo.group(
+            key=None,
+            condition={'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                       'slow_queries_persecond': {'$gt': 0},
+                       'server': self.server,
+                       },
+            initial={'count': 0, 'total': 0},
+            reduce='''function(doc, out) {
+                         out.count++;
+                         out.total += parseFloat(doc.slow_queries_persecond)
+                      }''',
+            finalize='function(out) {out.avg = out.total / out.count}',
+            )
+        if result:
+            self.data = result[0]['avg']
+        else:
+            self.data = 0
