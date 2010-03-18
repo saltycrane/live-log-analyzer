@@ -6,7 +6,7 @@ from pprint import pprint
 from pymongo import Connection, ASCENDING, DESCENDING
 from pymongo.errors import CollectionInvalid, InvalidStringData
 from debuglogging import error
-from settings import MONGODB_NAME, PROCESSED_COLL, PROCESSED_MAX_SIZE
+from settings import MONGODB_NAME, PROCESSED_MAX_SIZE
 from util import smart_str, convert_time_for_flot, transpose_list_of_lists
 
 class FlotReportGenerator(object):
@@ -135,11 +135,13 @@ class FlotReportGenerator(object):
                 'history': <self.history>
                 }
     """
-    def __init__(self, settings):
+    def __init__(self, settings, index, processed_collection):
         self.history_length = settings['history_length']                # N to save
         self.default_window_length = settings['default_window_length']  # in seconds
         self.default_flot_options = settings['default_flot_options']
         self.groups = settings['groups']
+        self.index = index
+        self.processed_collection = processed_collection
         self.mongo_raw = {}
         self.history = {}
         self.out = {}
@@ -152,12 +154,14 @@ class FlotReportGenerator(object):
         db = conn[MONGODB_NAME]
 
         # get mongodb processed collection
-        # db.drop_collection(PROCESSED_COLL)
+        # db.drop_collection(self.processed_collection)
         try:
             self.mongo_processed = db.create_collection(
-                PROCESSED_COLL, {'capped': True, 'size': PROCESSED_MAX_SIZE*1048576,})
+                self.processed_collection,
+                {'capped': True, 'size': PROCESSED_MAX_SIZE*1048576,},
+                )
         except CollectionInvalid:
-            self.mongo_processed = db[PROCESSED_COLL]
+            self.mongo_processed = db[self.processed_collection]
 
         # get mongodb raw collections
         for groupname, groupdata in self.groups.iteritems():
@@ -173,7 +177,6 @@ class FlotReportGenerator(object):
         self.get_and_assemble_history_data_for_flot()
         self.assemble_current_datapoints()
         self.prepare_output_data()
-        return self.out
 
     def create_metadata(self):
         """Assemble metadata data structures to send to the web frontend
@@ -196,7 +199,6 @@ class FlotReportGenerator(object):
         """Calculate the window start and end points to be passed to each analyzer
         """
         window_end = datetime.now()
-        self.flot_timestamp = convert_time_for_flot(window_end)
 
         def calc_window_endpoints_single():
             window_length = self.default_window_length
@@ -206,6 +208,10 @@ class FlotReportGenerator(object):
             return (window_start, window_end)
         self.window_endpoints = dict([
                 (groupname, calc_window_endpoints_single())
+                for groupname, groupdata in self.groups.iteritems()
+                ])
+        self.flot_timestamp = dict([
+                (groupname, convert_time_for_flot(self.window_endpoints[groupname][0]))
                 for groupname, groupdata in self.groups.iteritems()
                 ])
 
@@ -224,7 +230,7 @@ class FlotReportGenerator(object):
                 """
                 a = analyzer(self.mongo_raw[groupname], **kwargs)
                 a.run(self.window_endpoints[groupname])
-                return (self.flot_timestamp, a.data)
+                return (self.flot_timestamp[groupname], a.data)
 
             return [run_analyzer(aclass, kwargs)
                     for aclass, kwargs in analyzers_and_kwargs]
@@ -276,6 +282,7 @@ class FlotReportGenerator(object):
                 ])
 
     def prepare_output_data(self):
+        self.out['index'] = self.index
         self.out['history_length'] = self.history_length
         self.out['labels'] = self.labels
         self.out['current_data'] = self.current_data

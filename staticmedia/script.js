@@ -1,25 +1,48 @@
+// TODO: columns and keys should not be hard-coded
+// Need to send separate data for initialization and update
+var columns = [0, 1]
 var keys = ['rpm', 'cache0', 'cache1', 'http_status', 'aurt', 'mysql',
             ];
 
 var init_all = function() {
-   for (var i=0; i<keys.length; i++) {
-      init_graph(keys[i]);
-   }
+    for (var i=0; i<columns.length; i++) {
+        init_column(i);
+        for (var j=0; j<keys.length; j++) {
+            init_graph(i, keys[j]);
+        }
+    }
+    var lastcol = columns.length;
+    init_column(lastcol);
+    for (var j=0; j<keys.length; j++) {
+        init_values(lastcol, keys[j]);
+    }
 };
 
-var init_graph = function(key) {
-   var container1 = document.getElementById('container1');
+var init_column = function(index) {
+    var container = document.getElementById('container');
+    var column = document.createElement('div');
+    column.className = 'column';
+    column.id = 'column-' + index;
+    container.appendChild(column);
+}
 
-   var plot = document.createElement('div');
-   plot.className = 'plot';
-   plot.id = 'plot-' + key;
-   container1.appendChild(plot);
+var init_graph = function(col, key) {
+    var column = document.getElementById('column-' + col);
+    var plot = document.createElement('div');
+    plot.className = 'plot';
+    plot.id = 'plot-' + col + '-' + key;
+    plot.style.width = column.style.width;
+    plot.innerHTML = plot.id;
+    column.appendChild(plot);
+};
 
-   var value = document.createElement('div');
-   value.className = 'value';
-   value.id = 'value-' + key;
-   value.innerHTML = key;
-   container1.appendChild(value);
+var init_values = function(col, key) {
+    var column = document.getElementById('column-' + col);
+    var value = document.createElement('div');
+    value.className = 'value';
+    value.id = 'value-' + key;
+    value.innerHTML = key;
+    column.appendChild(value);
 };
 
 var update_all = function(body) {
@@ -28,18 +51,19 @@ var update_all = function(body) {
     var history = data['history'];
     var history_length = data['history_length'];
     var options_list = data['flot_options'];
+    var column = data['index'];
     for (var i=0; i<keys.length; i++) {
         var key = keys[i];
         var values = history[key];
         var label = labels[key];
         var options = options_list[key];
-        update_graph(key, values, label, history_length, options);
+        update_graph(column, key, values, label, history_length, options);
     }
 };
 
-var update_graph = function(key, values, label, history_length, options) {
+var update_graph = function(col, key, values, label, history_length, options) {
     // plot
-    var css_id = '#plot-' + key;
+    var css_id = '#plot-' + col + '-' + key;
     $.plot($(css_id), values, options);
 
     // print value

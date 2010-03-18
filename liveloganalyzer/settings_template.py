@@ -42,81 +42,97 @@ SOURCES_SETTINGS = [
      },
     ]
 
+PLOT_SET = {
+    'rpm': {
+        'label': 'Requests/min',
+        'format': '%d',
+        'collection': NG_CACHE_COLL,
+        # 'window_length': 120,
+        'analyzers': [
+            (RequestsPerMinuteByType, {'media': '1'}),
+            (RequestsPerMinuteByType, {'media': '0'}),
+            ],
+        },
+    'cache0': {
+        'label': 'Cache status (non-media)',
+        'format': '%.1f%%',
+        'collection': NG_CACHE_COLL,
+        'flot_options': {'yaxis': {'max': 100,},},
+        'analyzers': [
+            (CacheStatus, {'status': 'HIT', 'media': '0'}),
+            (CacheStatus, {'status': 'MISS', 'media': '0'}),
+            (CacheStatus, {'status': 'EXPIRED', 'media': '0'}),
+            (CacheStatus, {'status': 'UPDATING', 'media': '0'}),
+            (CacheStatus, {'status': 'STALE', 'media': '0'}),
+            ],
+        },
+    'cache1': {
+        'label': 'Cache status (media)',
+        'format': '%.1f%%',
+        'collection': NG_CACHE_COLL,
+        'flot_options': {'yaxis': {'max': 100,},},
+        'analyzers': [
+            (CacheStatus, {'status': 'HIT', 'media': '1'}),
+            (CacheStatus, {'status': 'MISS', 'media': '1'}),
+            (CacheStatus, {'status': 'EXPIRED', 'media': '1'}),
+            (CacheStatus, {'status': 'UPDATING', 'media': '1'}),
+            (CacheStatus, {'status': 'STALE', 'media': '1'}),
+            ],
+        },
+    'http_status': {
+        'label': 'HTTP Status',
+        'format': '%d',
+        'collection': NG_CACHE_COLL,
+        'flot_options': {'yaxis': {'min': 0,},},
+        'analyzers': [
+            (Upstream5xxStatus, {}),
+            ],
+        },
+    'aurt': {
+        'label': 'Avg Upstream Resp Time',
+        'format': '%.2f',
+        'collection': NG_CACHE_COLL,
+        'analyzers': [
+            (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.241:80'}),
+            (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.173:80'}),
+            (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.210:80'}),
+            ],
+        },
+    'mysql': {
+        'label': 'MySQL Questions/sec',
+        'format': '%.1f',
+        'collection': MYSQL_COLL,
+        'analyzers': [
+            (MysqlQuestionsPerSecond, {'server': 'us-my1'}),
+            (MysqlQuestionsPerSecond, {'server': 'us-my2'}),
+            ],
+        },
+    }
+
 ANALYSIS_SETTINGS = {
     'channel_name': '/topic/graph',
-    'interval': 60,                 # in seconds
-    'history_length': 120,        # number of processed data points to save
-    'default_window_length': 65,        # in seconds
-    'default_flot_options': {
-        'series': {'stack': 0,
-                   'bars': {'show': True, 'barWidth': 60*0.8*1000, 'lineWidth': 1,},},
-        'xaxis': {'mode': "time",
-                  'timeformat': "%H:%M",},
-        },
-    'groups': {
-        'rpm': {
-            'label': 'Requests/min',
-            'format': '%d',
-            'collection': NG_CACHE_COLL,
-            'window_length': 120,
-            'analyzers': [
-                (RequestsPerMinuteByType, {'media': '1'}),
-                (RequestsPerMinuteByType, {'media': '0'}),
-                ],
-            },
-        'cache0': {
-            'label': 'Cache status (non-media)',
-            'format': '%.1f%%',
-            'collection': NG_CACHE_COLL,
-            'flot_options': {'yaxis': {'max': 100,},},
-            'analyzers': [
-                (CacheStatus, {'status': 'HIT', 'media': '0'}),
-                (CacheStatus, {'status': 'MISS', 'media': '0'}),
-                (CacheStatus, {'status': 'EXPIRED', 'media': '0'}),
-                (CacheStatus, {'status': 'UPDATING', 'media': '0'}),
-                (CacheStatus, {'status': 'STALE', 'media': '0'}),
-                ],
-            },
-        'cache1': {
-            'label': 'Cache status (media)',
-            'format': '%.1f%%',
-            'collection': NG_CACHE_COLL,
-            'flot_options': {'yaxis': {'max': 100,},},
-            'analyzers': [
-                (CacheStatus, {'status': 'HIT', 'media': '1'}),
-                (CacheStatus, {'status': 'MISS', 'media': '1'}),
-                (CacheStatus, {'status': 'EXPIRED', 'media': '1'}),
-                (CacheStatus, {'status': 'UPDATING', 'media': '1'}),
-                (CacheStatus, {'status': 'STALE', 'media': '1'}),
-                ],
-            },
-        'http_status': {
-            'label': 'HTTP Status',
-            'format': '%d',
-            'collection': NG_CACHE_COLL,
-            'flot_options': {'yaxis': {'min': 0,},},
-            'analyzers': [
-                (Upstream5xxStatus, {}),
-                ],
-            },
-        'aurt': {
-            'label': 'Avg Upstream Resp Time',
-            'format': '%.2f',
-            'collection': NG_CACHE_COLL,
-            'analyzers': [
-                (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.241:80'}),
-                (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.210:80'}),
-                (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.173:80'}),
-                ],
-            },
-        'mysql': {
-            'label': 'MySQL Questions/sec',
-            'format': '%.1f',
-            'collection': MYSQL_COLL,
-            'analyzers': [
-                (MysqlQuestionsPerSecond, {'server': 'us-my1'}),
-                (MysqlQuestionsPerSecond, {'server': 'us-my2'}),
-                ],
-            },
-        },
+    'time_periods': [
+        {'interval': 5*60,                 # in seconds
+         'history_length': 144,        # number of processed data points to save
+         'default_window_length': 5*60+5,        # in seconds
+         'default_flot_options': {
+                'series': {'stack': 0,
+                           'bars': {'show': True, 'barWidth': (5*60)*(0.8*1000), 'lineWidth': 1,},},
+                'xaxis': {'mode': "time",
+                          'timeformat': "%H:%M",},
+                },
+         'groups': PLOT_SET,
+         },
+        {'interval': 5,                 # in seconds
+         'history_length': 60,        # number of processed data points to save
+         'default_window_length': 35,        # in seconds
+         'default_flot_options': {
+                'series': {'stack': 0,
+                           'bars': {'show': True, 'barWidth': (5)*(0.8*1000), 'lineWidth': 1,},},
+                'xaxis': {'mode': "time",
+                          'timeformat': ":%M",},
+                },
+         'groups': PLOT_SET,
+         },
+        ],
     }

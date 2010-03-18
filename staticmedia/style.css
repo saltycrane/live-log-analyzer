@@ -7,16 +7,20 @@ h1, h2 {
 }
 
 /* new */
-#container1 {
+#container {
 }
 .label {
 }
-.plot {
+.column {
+    width: 242px;
     float: left;
+}
+.plot {
+    /* float: left; */
     position: relative;
     margin: auto;
     border: 1px solid #444;
-    width: 720px;
+    /* width: 240px; */
     height: 120px;
     background-color: #fff;
 }
@@ -31,4 +35,12 @@ h1, h2 {
 }
 .value {
     float: left;
+    width: 240px;
+    height: 120px;
+}
+#column-0 {
+    width: 480px;
+}
+#column-1 {
+    width: 240px;
 }
