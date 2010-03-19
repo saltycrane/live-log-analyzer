@@ -52,7 +52,7 @@ class SourceExecutive(object):
                 except InvalidStringData, e:
                     error('%s\n%s' % (str(e), line))
             else:
-                error('Could not parse line:\n%s' % line)
+                error('%s could not parse line:\n%s' % (str(self.parser), line))
 
 if __name__ == '__main__':
     main()

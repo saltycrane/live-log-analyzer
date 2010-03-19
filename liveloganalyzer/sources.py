@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE, STDOUT
+from debuglogging import error
 from util import smart_str
 
 class SourceBase(object):
@@ -9,7 +10,13 @@ class SourceBase(object):
     def get_line(self):
         while True:
             line = self.stream.readline()
-            line = smart_str(line)
+            # TODO: keep these as unicode string instead of making them bytestrings
+            # line = smart_str(line)
+            try:
+                line = unicode(line).encode('utf-8')
+            except Exception, e:
+                error('%s\n%s' % (str(e), line))
+                line = ''
             line = self.filter(line)
             if line:
                 break
@@ -54,7 +61,7 @@ class MysqladminExtendedRelativeSource(SourceBase):
               ):
             return line
         else:
-            return None
+            return ''
 
 class MysqladminExtendedAbsoluteSource(SourceBase):
     """Get data from mysqladmin extended command (absolute)

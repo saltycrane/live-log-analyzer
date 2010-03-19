@@ -8,7 +8,6 @@ class RequestsPerMinuteByType(object):
         self.mongo = mongo_collection
         self.label = 'Media: %s' % media
         self.media = media
-        self.key = 'rpm%s' % media
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
@@ -26,7 +25,6 @@ class CacheStatus(object):
         self.status = status
         self.media = media
         self.label = '  %s (media: %s)' % (status, media)
-        self.key = '%s%s' % (status, media)
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
@@ -47,7 +45,6 @@ class Upstream5xxStatus(object):
     def __init__(self, mongo_collection):
         self.mongo = mongo_collection
         self.label = '5xx'
-        self.key = '5xx'
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
@@ -62,8 +59,6 @@ class AvgUpstreamResponseTimePerServer(object):
         self.mongo = mongo_collection
         self.server_address = server_address
         self.label = '  ' + server_address
-        self.key = re.sub(r'\.', '-', server_address)
-        self.key = re.sub(r':80', '', self.key)
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
@@ -85,11 +80,55 @@ class AvgUpstreamResponseTimePerServer(object):
         else:
             self.data = 0.0
 
+class WordpressLoggedIn(object):
+    def __init__(self, mongo_collection):
+        self.mongo = mongo_collection
+        self.label = 'Wordpress logged in'
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('wp_login', ASCENDING),])
+        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                             'wp_login': re.compile(r'wordpress_logged_in_'),
+                             }).count()
+        self.data = N
+
+class PhpErrorCountByServer(object):
+    def __init__(self, mongo_collection, server):
+        self.mongo = mongo_collection
+        self.server = server
+        self.label = server
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('server', ASCENDING)])
+        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                             'server': self.server,
+                             }).count()
+        self.data = N
+
+class SyslogCountByServerAndProcess(object):
+    def __init__(self, mongo_collection, server, process):
+        self.mongo = mongo_collection
+        self.server = server
+        self.process = process
+        self.label = server
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('server', ASCENDING),
+                                 ('process', ASCENDING),
+                                 ])
+        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                             # 'server': self.server,
+                             # 'process': re.compile(self.process),
+                             }).count()
+        self.data = N
+
 class MysqlQuestionsPerSecond(object):
     def __init__(self, mongo_collection, server):
         self.mongo = mongo_collection
         self.label = 'Questions/sec'
-        self.key = 'qps'
         self.server = server # master or slave (e.g. us-my1 or us-my2)
 
     def run(self, time_limit):
@@ -118,7 +157,6 @@ class MysqlSlowQueriesPerSecond(object):
     def __init__(self, mongo_collection, server):
         self.mongo = mongo_collection
         self.label = 'Slow queries/sec'
-        self.key = 'sqps'
         self.server = server # master or slave (e.g. us-my1 or us-my2)
 
     def run(self, time_limit):

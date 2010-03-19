@@ -2,45 +2,32 @@ body, html, h1 {
     font-family: sans-serif;
     background-color: #f3ffe2;
 }
-h1, h2 {
-    margin: 0px;
-}
-
-/* new */
 #container {
 }
 .label {
 }
 .column {
-    width: 242px;
     float: left;
 }
 .plot {
-    /* float: left; */
+    font-size: 10px;
     position: relative;
     margin: auto;
     border: 1px solid #444;
-    /* width: 240px; */
-    height: 120px;
+    height: 90px;
     background-color: #fff;
-}
-.bar {
-    /* background-color: #38f; */
-    background-color: red;
-    height: 200px;
-    width: 3px;
-    margin: 0px 0px;
-    float: left;
-    position: absolute;
 }
 .value {
     float: left;
-    width: 240px;
-    height: 120px;
+    width: 100px;
+    height: 92px;
 }
 #column-0 {
-    width: 480px;
+    width: 640px;
 }
 #column-1 {
-    width: 240px;
+    width: 200px;
+}
+#column-2 {
+    width: 100px;
 }

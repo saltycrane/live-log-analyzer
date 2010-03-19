@@ -120,6 +120,20 @@ class ApacheAccessParser(BaseParser):
             r'\[(?P<time>\d+/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} -\d{4})\] ',
             ])
 
+class SyslogParser(BaseParser):
+    date_format = "%Y %b %d %H:%M:%S"
+    pattern = ' '.join([
+            r'(?P<time>\S+ \d\d \d\d\:\d\d\:\d\d)',
+            r'(?P<hostname>\S+)',
+            r'(?P<process>\S+):',
+            r'(?P<therest>.*)',
+            ])
+
+    @classmethod
+    def post_process(cls, data):
+        data['time'] = '%d %s' % (datetime.now().year, data['time'])
+        return data
+
 class MysqladminExtendedRelativeParser(BaseParser):
     """For use with MysqladminExtendedRelativeSource
     Assumes -i parameter is 10
