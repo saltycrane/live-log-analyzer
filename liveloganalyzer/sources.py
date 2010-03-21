@@ -23,7 +23,7 @@ class SourceBase(object):
         return line
 
     def filter(self, line):
-        """To skip a line return something that evaluates to False.
+        """To skip a line return and empty string ('')
         Otherwise, return the line.
         """
         return line
@@ -82,4 +82,23 @@ class MysqladminExtendedAbsoluteSource(SourceBase):
               ):
             return line
         else:
-            return None
+            return ''
+
+class VmstatSource(SourceBase):
+    """Get data from vmstat
+    """
+    def __init__(self, host):
+        self.host = host
+
+    def start_stream(self):
+        cmd = 'ssh %s vmstat 5' % self.host
+        p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
+        self.stream = p.stdout
+
+    def filter(self, line):
+        if   (line.startswith('procs') or
+              line.startswith(' r')
+              ):
+            return ''
+        else:
+            return line

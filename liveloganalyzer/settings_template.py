@@ -5,23 +5,25 @@ of the collection must be the same in SOURCES_SETTINGS and ANALYSIS_SETTINGS.
 """
 
 from sources import (SourceLog, MysqladminExtendedRelativeSource,
-                     MysqladminExtendedAbsoluteSource,
+                     MysqladminExtendedAbsoluteSource, VmstatSource,
                      )
 from parsers import (NginxCacheParser, MysqladminExtendedRelativeParser,
                      MysqladminExtendedAbsoluteParser, PhpErrorParser, SyslogParser,
+                     VmstatParser,
                      )
 from analyzers import (CacheStatus, Upstream5xxStatus, AvgUpstreamResponseTimePerServer,
                        RequestsPerMinuteByType, MysqlQuestionsPerSecond,
                        MysqlSlowQueriesPerSecond, WordpressLoggedIn, PhpErrorCountByServer,
-                       SyslogCountByServerAndProcess,
+                       SyslogCountByServerAndProcess, GenericAverageValueAnalyzer,
                        )
 MONGODB_NAME = 'mydb'
 PROCESSED_MAX_SIZE = 1 # in megabytes
-MAX_COLLECTION_SIZE = 50 # in megabytes
+MAX_COLLECTION_SIZE = 10 # in megabytes
 NG_CACHE_COLL = 'ng_cache'
 SYSLOG_COLL = 'syslog'
 PHP_ERROR_COLL = 'php_error'
 MYSQL_COLL = 'mysql_extended'
+SYSTEM_COLL = 'system'
 
 SOURCES_SETTINGS = [
     {'source': (SourceLog, {'host': 'us-ng1', 'filepath': '/var/log/nginx/cache.log'}),
@@ -56,6 +58,18 @@ SOURCES_SETTINGS = [
      'parser': PhpErrorParser,
      'collection': PHP_ERROR_COLL,
      },
+    {'source': (VmstatSource, {'host': 'us-apa1',},),
+     'parser': VmstatParser,
+     'collection': SYSTEM_COLL,
+     },
+    {'source': (VmstatSource, {'host': 'us-apa2',},),
+     'parser': VmstatParser,
+     'collection': SYSTEM_COLL,
+     },
+    {'source': (VmstatSource, {'host': 'us-apa3',},),
+     'parser': VmstatParser,
+     'collection': SYSTEM_COLL,
+     },
     {'source': (MysqladminExtendedRelativeSource, {'host': 'us-my1',},),
      'parser': MysqladminExtendedRelativeParser,
      'collection': MYSQL_COLL,
@@ -64,15 +78,6 @@ SOURCES_SETTINGS = [
      'parser': MysqladminExtendedRelativeParser,
      'collection': MYSQL_COLL,
      },
-
-    # {'collection': MYSQL_COLL,
-    #  'source': (MysqladminExtendedAbsoluteSource, {'host': 'us-my1',},),
-    #  'parser': MysqladminExtendedAbsoluteParser,
-    #  },
-    # {'collection': MYSQL_COLL,
-    #  'source': (MysqladminExtendedAbsoluteSource, {'host': 'us-my2',},),
-    #  'parser': MysqladminExtendedAbsoluteParser,
-    #  },
     ]
 
 PLOT_SET = {
@@ -116,7 +121,6 @@ PLOT_SET = {
         'label': 'HTTP Status',
         'format': '%d',
         'collection': NG_CACHE_COLL,
-        'flot_options': {'yaxis': {'min': 0,},},
         'analyzers': [
             (Upstream5xxStatus, {}),
             ],
@@ -125,7 +129,6 @@ PLOT_SET = {
         'label': 'WP logged in',
         'format': '%d',
         'collection': NG_CACHE_COLL,
-        'flot_options': {'yaxis': {'min': 0,},},
         'analyzers': [
             (WordpressLoggedIn, {}),
             ],
@@ -134,7 +137,6 @@ PLOT_SET = {
         'label': 'PHP error count',
         'format': '%d',
         'collection': PHP_ERROR_COLL,
-        'flot_options': {'yaxis': {'min': 0,},},
         'analyzers': [
             (PhpErrorCountByServer, {'server': 'us-apa1'}),
             (PhpErrorCountByServer, {'server': 'us-apa2'}),
@@ -145,7 +147,6 @@ PLOT_SET = {
         'label': 's3fs count',
         'format': '%d',
         'collection': SYSLOG_COLL,
-        'flot_options': {'yaxis': {'min': 0,},},
         'analyzers': [
             (SyslogCountByServerAndProcess, {'server': 'us-apa1', 'process': 's3fs'}),
             (SyslogCountByServerAndProcess, {'server': 'us-apa2', 'process': 's3fs'}),
@@ -160,6 +161,19 @@ PLOT_SET = {
             (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.241:80'}),
             (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.173:80'}),
             (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.210:80'}),
+            ],
+        },
+    'swap': {
+        'label': 'Apache swap usage',
+        'format': '%.1f',
+        'collection': SYSTEM_COLL,
+        'analyzers': [
+            (GenericAverageValueAnalyzer, {'server': 'us-apa1', 'parameter': 'si',},),
+            (GenericAverageValueAnalyzer, {'server': 'us-apa2', 'parameter': 'si',},),
+            (GenericAverageValueAnalyzer, {'server': 'us-apa3', 'parameter': 'si',},),
+            (GenericAverageValueAnalyzer, {'server': 'us-apa1', 'parameter': 'so',},),
+            (GenericAverageValueAnalyzer, {'server': 'us-apa2', 'parameter': 'so',},),
+            (GenericAverageValueAnalyzer, {'server': 'us-apa3', 'parameter': 'so',},),
             ],
         },
     'mysql': {
@@ -188,6 +202,8 @@ ANALYSIS_SETTINGS = {
                           'labelWidth': 20,
                           'labelHeight': 8,
                           },
+                'yaxis': {'min': 0,
+                          },
                 },
          'groups': PLOT_SET,
          },
@@ -201,6 +217,8 @@ ANALYSIS_SETTINGS = {
                           'timeformat': ":%M",
                           'labelWidth': 20,
                           'labelHeight': 8,
+                          },
+                'yaxis': {'min': 0,
                           },
                 },
          'groups': PLOT_SET,

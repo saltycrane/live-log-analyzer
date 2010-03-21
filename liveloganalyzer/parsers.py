@@ -180,3 +180,25 @@ class MysqladminExtendedAbsoluteParser(BaseParser):
         """Remove empty values
         """
         return dict([(k, v) for k, v in data.iteritems() if v])
+
+class VmstatParser(BaseParser):
+    """Parses vmstat output
+    """
+    pattern = r'\s+'.join([
+            r'(?P<r>\d+)',
+            r'(?P<b>\d+)',
+            r'(?P<swpd>\d+)',
+            r'(?P<free>\d+)',
+            r'(?P<buff>\d+)',
+            r'(?P<cache>\d+)',
+            r'(?P<si>\d+)',
+            r'(?P<so>\d+)',
+            r'(?P<bi>\d+)',
+            r'(?P<bo>\d+)',
+            r'(?P<in>\d+)',
+            r'(?P<cs>\d+)',
+            r'(?P<us>\d+)',
+            r'(?P<sy>\d+)',
+            r'(?P<id>\d+)',
+            r'(?P<wa>\d+)',
+            ])
