@@ -1,29 +1,28 @@
+import time
 from subprocess import Popen, PIPE, STDOUT
 from debuglogging import error
-from util import smart_str
 
 class SourceBase(object):
-    """Subclasses should implement "start_stream()" and optionally "filter()"
-    "start_stream()" should set "self.stream" to be a file-like object with
-    a "readline()" method.
+    """Subclasses should define instance attributes self.host, self.cmd, self.encoding
+    and optionally the instance method self.filter()
     """
+    def start_stream(self):
+        sshcmd = 'ssh %s %s' % (self.host, self.cmd)
+        self.p = Popen(sshcmd, shell=True, stdout=PIPE, stderr=STDOUT)
+
     def get_line(self):
         while True:
-            line = self.stream.readline()
-            # TODO: keep these as unicode string instead of making them bytestrings
-            # line = smart_str(line)
-            try:
-                line = unicode(line).encode('utf-8')
-            except Exception, e:
-                error('%s\n%s' % (str(e), line))
-                line = ''
+            line = self.p.stdout.readline()
+            if line == '' and self.p.poll() != None:
+                raise Exception('Child process exited for host %s: %s' % (self.host, self.cmd))
+            line = unicode(line, encoding=self.encoding, errors='replace')
             line = self.filter(line)
             if line:
                 break
         return line
 
     def filter(self, line):
-        """To skip a line return and empty string ('')
+        """To skip a line return an empty string ('')
         Otherwise, return the line.
         """
         return line
@@ -31,29 +30,18 @@ class SourceBase(object):
 class SourceLog(SourceBase):
     """A source log file on a remote host.
     """
-    def __init__(self, host, filepath):
+    def __init__(self, host, filepath, encoding='utf-8'):
         self.host = host
-        self.filepath = filepath
-
-    def start_stream(self):
-        """Tail -f the remote file.
-        Return a file object of the stdout+stderr.
-        """
-        cmd = 'ssh %s tail --follow=name %s' % (self.host, self.filepath)
-        p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
-        self.stream = p.stdout
+        self.encoding = encoding
+        self.cmd = 'tail --follow=name %s' % filepath
 
 class MysqladminExtendedRelativeSource(SourceBase):
     """Get data from mysqladmin extended command (relative)
     """
-    def __init__(self, host):
+    def __init__(self, host, encoding='utf-8'):
         self.host = host
-
-    def start_stream(self):
-        mysql_command = "mysqladmin extended -i10 -r"
-        cmd = 'ssh %s "%s" ' % (self.host, mysql_command)
-        p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
-        self.stream = p.stdout
+        self.encoding = encoding
+        self.cmd = 'mysqladmin extended -i10 -r'
 
     def filter(self, line):
         if   ('Questions' in line or
@@ -66,14 +54,10 @@ class MysqladminExtendedRelativeSource(SourceBase):
 class MysqladminExtendedAbsoluteSource(SourceBase):
     """Get data from mysqladmin extended command (absolute)
     """
-    def __init__(self, host):
+    def __init__(self, host, encoding='utf-8'):
         self.host = host
-
-    def start_stream(self):
-        mysql_command = "mysqladmin extended"
-        cmd = 'ssh %s "%s" ' % (self.host, mysql_command)
-        p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
-        self.stream = p.stdout
+        self.encoding = encoding
+        self.cmd = 'mysqladmin extended'
 
     def filter(self, line):
         if   ('Slave_running' in line or
@@ -87,13 +71,10 @@ class MysqladminExtendedAbsoluteSource(SourceBase):
 class VmstatSource(SourceBase):
     """Get data from vmstat
     """
-    def __init__(self, host):
+    def __init__(self, host, encoding='utf-8'):
         self.host = host
-
-    def start_stream(self):
-        cmd = 'ssh %s vmstat 5' % self.host
-        p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
-        self.stream = p.stdout
+        self.encoding = encoding
+        self.cmd = 'vmstat 5'
 
     def filter(self, line):
         if   (line.startswith('procs') or
