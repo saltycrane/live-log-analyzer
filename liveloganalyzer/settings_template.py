@@ -5,20 +5,21 @@ of the collection must be the same in SOURCES_SETTINGS and ANALYSIS_SETTINGS.
 """
 
 from sources import (SourceLog, MysqladminExtendedRelativeSource,
-                     MysqladminExtendedAbsoluteSource, VmstatSource,
+                     MysqladminExtendedAbsoluteSource, VmstatSource, DfSource,
                      )
 from parsers import (NginxCacheParser, MysqladminExtendedRelativeParser,
                      MysqladminExtendedAbsoluteParser, PhpErrorParser, SyslogParser,
-                     VmstatParser,
+                     VmstatParser, DfParser,
                      )
 from analyzers import (CacheStatus, Upstream5xxStatus, AvgUpstreamResponseTimePerServer,
                        RequestsPerMinuteByType, MysqlQuestionsPerSecond,
                        MysqlSlowQueriesPerSecond, WordpressLoggedIn, PhpErrorCountByServer,
                        SyslogCountByServerAndProcess, GenericAverageValueAnalyzer,
+                       WordpressLoggedInByUser, AvgUpstreamResponseTimePerServerLoggedIn,
                        )
 MONGODB_NAME = 'mydb'
 PROCESSED_MAX_SIZE = 1 # in megabytes
-MAX_COLLECTION_SIZE = 10 # in megabytes
+MAX_COLLECTION_SIZE = 5 # in megabytes
 NG_CACHE_COLL = 'ng_cache'
 SYSLOG_COLL = 'syslog'
 PHP_ERROR_COLL = 'php_error'
@@ -26,57 +27,37 @@ MYSQL_COLL = 'mysql_extended'
 SYSTEM_COLL = 'system'
 
 SOURCES_SETTINGS = [
-    {'source': (SourceLog, {'host': 'us-ng1', 'filepath': '/var/log/nginx/cache.log'}),
+    {'source': (SourceLog, {'host': 'us-ng1', 'filepath': '/var/log/nginx/cache.log', 'encoding': 'latin-1',}),
      'parser': NginxCacheParser,
      'collection': NG_CACHE_COLL,
      },
-    {'source': (SourceLog, {'host': 'us-ng1', 'filepath': '/var/log/nginx/cache.log'}),
+    {'source': (SourceLog, {'host': 'us-ng2', 'filepath': '/var/log/nginx/cache.log', 'encoding': 'latin-1',}),
      'parser': NginxCacheParser,
      'collection': NG_CACHE_COLL,
      },
-    {'source': (SourceLog, {'host': 'us-apa1', 'filepath': '/var/log/syslog'}),
-     'parser': SyslogParser,
-     'collection': SYSLOG_COLL,
+    {'source': (SourceLog, {'host': 'us-ng3', 'filepath': '/var/log/nginx/cache.log', 'encoding': 'latin-1',}),
+     'parser': NginxCacheParser,
+     'collection': NG_CACHE_COLL,
      },
-    {'source': (SourceLog, {'host': 'us-apa2', 'filepath': '/var/log/syslog'}),
-     'parser': SyslogParser,
-     'collection': SYSLOG_COLL,
-     },
-    {'source': (SourceLog, {'host': 'us-apa3', 'filepath': '/var/log/syslog'}),
-     'parser': SyslogParser,
-     'collection': SYSLOG_COLL,
-     },
-    {'source': (SourceLog, {'host': 'us-apa1', 'filepath': '/var/log/PHP_errors.log'}),
+    {'source': (SourceLog, {'host': 'us-apa1', 'filepath': '/var/log/PHP_errors.log', 'encoding': 'latin-1',}),
      'parser': PhpErrorParser,
      'collection': PHP_ERROR_COLL,
      },
-    {'source': (SourceLog, {'host': 'us-apa2', 'filepath': '/var/log/PHP_errors.log'}),
+    {'source': (SourceLog, {'host': 'us-apa2', 'filepath': '/var/log/PHP_errors.log', 'encoding': 'latin-1',}),
      'parser': PhpErrorParser,
      'collection': PHP_ERROR_COLL,
      },
-    {'source': (SourceLog, {'host': 'us-apa3', 'filepath': '/var/log/PHP_errors.log'}),
+    {'source': (SourceLog, {'host': 'us-apa3', 'filepath': '/var/log/PHP_errors.log', 'encoding': 'latin-1',}),
      'parser': PhpErrorParser,
      'collection': PHP_ERROR_COLL,
      },
-    {'source': (VmstatSource, {'host': 'us-apa1',},),
-     'parser': VmstatParser,
-     'collection': SYSTEM_COLL,
-     },
-    {'source': (VmstatSource, {'host': 'us-apa2',},),
-     'parser': VmstatParser,
-     'collection': SYSTEM_COLL,
-     },
-    {'source': (VmstatSource, {'host': 'us-apa3',},),
-     'parser': VmstatParser,
-     'collection': SYSTEM_COLL,
-     },
-    {'source': (MysqladminExtendedRelativeSource, {'host': 'us-my1',},),
+    {'source': (MysqladminExtendedRelativeSource, {'host': 'us-my1',}),
      'parser': MysqladminExtendedRelativeParser,
      'collection': MYSQL_COLL,
      },
-    {'source': (MysqladminExtendedRelativeSource, {'host': 'us-my2',},),
-     'parser': MysqladminExtendedRelativeParser,
-     'collection': MYSQL_COLL,
+    {'source': (DfSource, {'host': 'us-my1', 'filepath': '/mnt',}),
+     'parser': DfParser,
+     'collection': SYSTEM_COLL,
      },
     ]
 
@@ -130,6 +111,7 @@ PLOT_SET = {
         'format': '%d',
         'collection': NG_CACHE_COLL,
         'analyzers': [
+            (WordpressLoggedInByUser, {'wp_user': r'eric\.yates'}),
             (WordpressLoggedIn, {}),
             ],
         },
@@ -143,48 +125,40 @@ PLOT_SET = {
             (PhpErrorCountByServer, {'server': 'us-apa3'}),
             ],
         },
-    's3fs': {
-        'label': 's3fs count',
-        'format': '%d',
-        'collection': SYSLOG_COLL,
-        'analyzers': [
-            (SyslogCountByServerAndProcess, {'server': 'us-apa1', 'process': 's3fs'}),
-            (SyslogCountByServerAndProcess, {'server': 'us-apa2', 'process': 's3fs'}),
-            (SyslogCountByServerAndProcess, {'server': 'us-apa3', 'process': 's3fs'}),
-            ],
-        },
     'aurt': {
         'label': 'Avg Upstream Resp Time',
         'format': '%.2f',
         'collection': NG_CACHE_COLL,
         'analyzers': [
-            (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.241:80'}),
-            (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.173:80'}),
-            (AvgUpstreamResponseTimePerServer, {'server_address': '10.111.111.210:80'}),
+            (AvgUpstreamResponseTimePerServerLoggedIn, {'logged_in': r'^\s*$',}),
             ],
         },
-    'swap': {
-        'label': 'Apache swap usage',
-        'format': '%.1f',
-        'collection': SYSTEM_COLL,
+    'aurtli': {
+        'label': 'Avg Upstream Resp Time Logged In',
+        'format': '%.2f',
+        'collection': NG_CACHE_COLL,
         'analyzers': [
-            (GenericAverageValueAnalyzer, {'server': 'us-apa1', 'parameter': 'si',},),
-            (GenericAverageValueAnalyzer, {'server': 'us-apa2', 'parameter': 'si',},),
-            (GenericAverageValueAnalyzer, {'server': 'us-apa3', 'parameter': 'si',},),
-            (GenericAverageValueAnalyzer, {'server': 'us-apa1', 'parameter': 'so',},),
-            (GenericAverageValueAnalyzer, {'server': 'us-apa2', 'parameter': 'so',},),
-            (GenericAverageValueAnalyzer, {'server': 'us-apa3', 'parameter': 'so',},),
+            (AvgUpstreamResponseTimePerServerLoggedIn, {'logged_in': r'wordpress_logged_in_',}),
             ],
         },
     'mysql': {
         'label': 'MySQL Questions/sec',
         'format': '%.1f',
         'collection': MYSQL_COLL,
-        'flot_options': {'yaxis': {'max': 1100,},},
+        'flot_options': {'yaxis': {'max': 4100,},},
         'analyzers': [
             (MysqlQuestionsPerSecond, {'server': 'us-my1'}),
             (MysqlQuestionsPerSecond, {'server': 'us-my2'}),
             ],
+        },
+    'df': {
+        'label': 'Disk Usage',
+        'format': '%.1f',
+        'collection': SYSTEM_COLL,
+        'flot_options': {'yaxis': {'max': 100,},},
+        'analyzers': [
+            (GenericAverageValueAnalyzer, {'server': 'us-my1', 'parameter': 'df_use_percent',}),
+            ]
         },
     }
 

@@ -1,5 +1,12 @@
 import time
+from subprocess import Popen, PIPE, STDOUT
 from pytz import timezone
+
+def backtick(cmd):
+    """Like Perl's backtick. Run a shell command and return the output as a string.
+    """
+    p = Popen(cmd, shell=True, stdout=PIPE, stderr=STDOUT)
+    return p.stdout.read()
 
 def transpose_list_of_lists(lol):
     return [list(newinner) for newinner in map(None, *lol)]

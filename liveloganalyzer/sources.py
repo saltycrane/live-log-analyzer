@@ -7,7 +7,7 @@ class SourceBase(object):
     and optionally the instance method self.filter()
     """
     def start_stream(self):
-        sshcmd = 'ssh %s %s' % (self.host, self.cmd)
+        sshcmd = 'ssh %s "%s"' % (self.host, self.cmd)
         self.p = Popen(sshcmd, shell=True, stdout=PIPE, stderr=STDOUT)
 
     def get_line(self):
@@ -80,6 +80,20 @@ class VmstatSource(SourceBase):
         if   (line.startswith('procs') or
               line.startswith(' r')
               ):
+            return ''
+        else:
+            return line
+
+class DfSource(SourceBase):
+    """Get data from "df"
+    """
+    def __init__(self, host, filepath, encoding='utf-8'):
+        self.host = host
+        self.encoding = encoding
+        self.cmd = 'while [ 1 ]; do df %s; sleep 60; done' % filepath
+
+    def filter(self, line):
+        if line.startswith('Filesystem'):
             return ''
         else:
             return line

@@ -1,8 +1,8 @@
 // TODO: columns and keys should not be hard-coded
 // Need to send separate data for initialization and update
 var columns = [0, 1]
-var keys = ['rpm', 'cache0', 'cache1', 'http_status', 'wp_login', 'php_error',
-            's3fs', 'aurt', 'swap', 'mysql',
+var keys = ['rpm', 'cache0', 'cache1', 'http_status', 'wp_login',
+            'aurt', 'aurtli', 'mysql', 'df',
             ];
 
 var init_all = function() {

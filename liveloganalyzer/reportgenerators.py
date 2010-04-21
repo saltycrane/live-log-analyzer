@@ -226,14 +226,41 @@ class FlotReportGenerator(object):
             def run_analyzer(analyzer, kwargs):
                 """Instantiate the given analyzer, passing it the mongodb collection
                 object and kwargs, run it, and return a datapoint as a tuple
-                (timestamp, data)
+                (timestamp, data) or (timestamp, [data1, data2, ...])
                 """
                 a = analyzer(self.mongo_raw[groupname], **kwargs)
                 a.run(self.window_endpoints[groupname])
                 return (self.flot_timestamp[groupname], a.data)
+            def flatten(subpoint):
+                """
+                If subpoint is of the form:
+                    (timestamp, [data1, data2, ...])
+                    Return: [(timstamp, data1), (timestamp, data2), ...]
+                Elif subpoint is of the form:
+                    (timestamp, data)
+                    Return: [(timestamp, data)]
+                """
+                if isinstance(subpoint[1], list):
+                    return [(subpoint[0], d) for d in subpoint[1]]
+                else:
+                    return [subpoint]
 
-            return [run_analyzer(aclass, kwargs)
-                    for aclass, kwargs in analyzers_and_kwargs]
+            unflattened = [run_analyzer(aclass, kwargs)
+                           for aclass, kwargs in analyzers_and_kwargs]
+            flattened_step1 = [flatten(uf) for uf in unflattened]
+            flattened_step2 = [f2
+                               for f1 in flattened_step1
+                               for f2 in f1]
+            return flattened_step2
+            # return [run_analyzer(aclass, kwargs)
+            #         for aclass, kwargs in analyzers_and_kwargs]
+            # toreturn = []
+            # for aclass, kwargs in analyzers_and_kwargs:
+            #     unflattened = run_analyzer(aclass, kwargs)
+            #     flattened = flatten(unflattened)
+            #     for f in flattened:
+            #         toreturn.append(f)
+            # return f
 
         self.datapoint = dict([
                 (groupname, run_list_of_analyzers(groupdata['analyzers']))

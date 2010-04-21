@@ -80,6 +80,40 @@ class AvgUpstreamResponseTimePerServer(object):
         else:
             self.data = 0.0
 
+class AvgUpstreamResponseTimePerServerLoggedIn(object):
+    """This one is the sh**
+    """
+    data_length = 1
+    def __init__(self, mongo_collection, logged_in):
+        self.mongo = mongo_collection
+        self.logged_in = logged_in
+        self.label = 'need to auto-generate'
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('ups_rt', ASCENDING),
+                                 ('ups_ad', ASCENDING),
+                                 ('wp_login', ASCENDING),
+                                 ])
+        result = self.mongo.group(
+            key=['ups_ad'],
+            condition={'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                       'ups_rt': {'$ne': '-'},
+                       'wp_login': re.compile(self.logged_in),
+                       },
+            initial={'count': 0, 'total': 0},
+            reduce='function(doc, out) {out.count++; out.total += parseFloat(doc.ups_rt)}',
+            finalize='function(out) {out.avg = out.total / out.count}',
+            )
+        result = sorted(result, key=lambda item: item['ups_ad'])
+        # debug = [r['ups_ad'] for r in result]
+        # print debug
+        if result:
+            self.data = [r['avg'] for r in result]
+            self.data_length = len(self.data)
+        else:
+            self.data = [0.0] * self.data_length
+
 class WordpressLoggedIn(object):
     def __init__(self, mongo_collection):
         self.mongo = mongo_collection
@@ -90,6 +124,20 @@ class WordpressLoggedIn(object):
                                  ('wp_login', ASCENDING),])
         N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
                              'wp_login': re.compile(r'wordpress_logged_in_'),
+                             }).count()
+        self.data = N
+
+class WordpressLoggedInByUser(object):
+    def __init__(self, mongo_collection, wp_user):
+        self.mongo = mongo_collection
+        self.wp_user = wp_user
+        self.label = wp_user
+
+    def run(self, time_limit):
+        self.mongo.ensure_index([('time', ASCENDING),
+                                 ('wp_login', ASCENDING),])
+        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                             'wp_login': re.compile(r'wordpress_logged_in_%s' % self.wp_user),
                              }).count()
         self.data = N
 

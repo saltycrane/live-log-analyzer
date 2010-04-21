@@ -59,6 +59,7 @@ class NginxCacheParser(BaseParser):
                      'Comment author email: $comment_author_email '
                      'Comment author: $comment_author '
                      'Wordpress logged in: $wordpress_logged_in '
+                     'Backend: $mybackend '
                      ;
     """
     date_format = "%d/%b/%Y:%H:%M:%S"
@@ -81,6 +82,7 @@ class NginxCacheParser(BaseParser):
             r'Comment author email: (?P<com_email>.*)',
             r'Comment author: (?P<com_author>.*)',
             r'Wordpress logged in: (?P<wp_login>.*)',
+            r'Backend: (?P<backend>.*)',
             ])
 
     @classmethod
@@ -202,3 +204,25 @@ class VmstatParser(BaseParser):
             r'(?P<id>\d+)',
             r'(?P<wa>\d+)',
             ])
+
+class DfParser(BaseParser):
+    """Parses df output
+    """
+    pattern = r'\s+'.join([
+            r'(?P<df_filesystem>\S+)',
+            r'(?P<df_blocks>\d+)',
+            r'(?P<df_used>\d+)',
+            r'(?P<df_available>\d+)',
+            r'(?P<df_use_percent>\S+)',
+            r'(?P<df_mounted_on>\S+)',
+            ])
+
+    @classmethod
+    def post_process(cls, data):
+        """Removed the percent character from df_use_percent
+        """
+        def remove_percent(k, v):
+            if k == 'df_use_percent':
+                v = v.rstrip('%')
+            return (k, v)
+        return dict([remove_percent(k, v) for k, v in data.iteritems()])
