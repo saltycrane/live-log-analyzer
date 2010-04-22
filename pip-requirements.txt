@@ -1,6 +1,6 @@
 pymongo
-Twisted==9.0.0
-orbited
+Twisted==10.0.0
+orbited==0.7.10
 stompservice
 simplejson
 pytz
