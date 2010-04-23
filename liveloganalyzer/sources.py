@@ -3,18 +3,43 @@ from subprocess import Popen, PIPE, STDOUT
 from debuglogging import error
 
 class SourceBase(object):
-    """Subclasses should define instance attributes self.host, self.cmd, self.encoding
+    """Subclasses should define instance attributes self.sshparams, self.cmd, self.encoding
     and optionally the instance method self.filter()
+    self.sshparams is a dict containing the parameters to pass to the ssh command.
+    At a minimum, it should define self.sshparams['hostname']. It may also define
+    other ssh options such as 'host', 'user' or 'identityfile'. Option names are
+    the same as those used in the ssh config file, except in lowercase. For more
+    information see the man page for ssh_config. The 'host' option is used as a
+    nickname. If 'host' is not specified, the value for 'hostname' is assigned
+    to 'host'.
+
+    Example self.sshparams:
+
+    {'host': 'us-ng1',
+     'hostname': '111.111.111.15',
+     'identityfile': '/home/saltycrane/sshkeys/myprivatekey',
+     'user': 'myusername',
+     }
     """
     def start_stream(self):
-        sshcmd = 'ssh %s "%s"' % (self.host, self.cmd)
-        self.p = Popen(sshcmd, shell=True, stdout=PIPE, stderr=STDOUT)
+        if 'host' not in self.sshparams:
+            self.sshparams['host'] = self.sshparams['hostname']
+        ssh_options = '-o' + ' -o'.join(['='.join([k, v])
+                                         for k, v in self.sshparams.iteritems()
+                                         if k != 'hostname' and k != 'host'])
+        ssh_cmd = ' '.join(['ssh',
+                            ssh_options,
+                            self.sshparams['hostname'],
+                            '"%s"' %  self.cmd,
+                            ])
+        self.p = Popen(ssh_cmd, shell=True, stdout=PIPE, stderr=STDOUT)
 
     def get_line(self):
         while True:
             line = self.p.stdout.readline()
             if line == '' and self.p.poll() != None:
-                raise Exception('Child process exited for host %s: %s' % (self.host, self.cmd))
+                raise Exception('Child process exited for host %s: %s' % (
+                        self.sshparams['host'], self.cmd))
             line = unicode(line, encoding=self.encoding, errors='replace')
             line = self.filter(line)
             if line:
@@ -30,16 +55,16 @@ class SourceBase(object):
 class SourceLog(SourceBase):
     """A source log file on a remote host.
     """
-    def __init__(self, host, filepath, encoding='utf-8'):
-        self.host = host
+    def __init__(self, sshparams, filepath, encoding='utf-8'):
+        self.sshparams = sshparams
         self.encoding = encoding
         self.cmd = 'tail --follow=name %s' % filepath
 
 class MysqladminExtendedRelativeSource(SourceBase):
     """Get data from mysqladmin extended command (relative)
     """
-    def __init__(self, host, encoding='utf-8'):
-        self.host = host
+    def __init__(self, sshparams, encoding='utf-8'):
+        self.sshparams = sshparams
         self.encoding = encoding
         self.cmd = 'mysqladmin extended -i10 -r'
 
@@ -54,8 +79,8 @@ class MysqladminExtendedRelativeSource(SourceBase):
 class MysqladminExtendedAbsoluteSource(SourceBase):
     """Get data from mysqladmin extended command (absolute)
     """
-    def __init__(self, host, encoding='utf-8'):
-        self.host = host
+    def __init__(self, sshparams, encoding='utf-8'):
+        self.sshparams = sshparams
         self.encoding = encoding
         self.cmd = 'mysqladmin extended'
 
@@ -71,8 +96,8 @@ class MysqladminExtendedAbsoluteSource(SourceBase):
 class VmstatSource(SourceBase):
     """Get data from vmstat
     """
-    def __init__(self, host, encoding='utf-8'):
-        self.host = host
+    def __init__(self, sshparams, encoding='utf-8'):
+        self.sshparams = sshparams
         self.encoding = encoding
         self.cmd = 'vmstat 5'
 
@@ -87,8 +112,8 @@ class VmstatSource(SourceBase):
 class DfSource(SourceBase):
     """Get data from "df"
     """
-    def __init__(self, host, filepath, encoding='utf-8'):
-        self.host = host
+    def __init__(self, sshparams, filepath, encoding='utf-8'):
+        self.sshparams = sshparams
         self.encoding = encoding
         self.cmd = 'while [ 1 ]; do df %s; sleep 60; done' % filepath
 

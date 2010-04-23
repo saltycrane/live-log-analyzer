@@ -157,9 +157,7 @@ class FlotReportGenerator(object):
         # db.drop_collection(self.processed_collection)
         try:
             self.mongo_processed = db.create_collection(
-                self.processed_collection,
-                {'capped': True, 'size': PROCESSED_MAX_SIZE*1048576,},
-                )
+                self.processed_collection, capped=True, size=PROCESSED_MAX_SIZE*1048576)
         except CollectionInvalid:
             self.mongo_processed = db[self.processed_collection]
 

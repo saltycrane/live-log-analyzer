@@ -37,7 +37,7 @@ class SourceExecutive(object):
         db = conn[MONGODB_NAME]
         try:
             self.mongo = db.create_collection(
-                self.collection, {'capped': True, 'size': MAX_COLLECTION_SIZE * 1048576,})
+                self.collection, capped=True, size=MAX_COLLECTION_SIZE*1048576)
         except CollectionInvalid:
             self.mongo = db[self.collection]
 
@@ -46,7 +46,7 @@ class SourceExecutive(object):
             line = self.source.get_line()
             data = self.parser.parse_line(line)
             if data:
-                data['server'] = self.source.host
+                data['server'] = self.source.sshparams['host']
                 try:
                     self.mongo.insert(data)
                 except InvalidStringData, e:
