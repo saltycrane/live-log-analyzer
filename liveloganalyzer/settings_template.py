@@ -45,19 +45,19 @@ HOSTS = {
     }
 
 SOURCES_SETTINGS = [
-    {'source': (SourceLog, {'sshparams': HOSTS['us-ng1'], 'filepath': '/var/log/nginx/cache.log', 'encoding': 'latin-1',}),
+    {'source': (SourceLog, {'ssh_params': HOSTS['us-ng1'], 'filepath': '/var/log/nginx/cache.log', 'encoding': 'latin-1',}),
      'parser': NginxCacheParser,
      'collection': NG_CACHE_COLL,
      },
-    {'source': (SourceLog, {'sshparams': HOSTS['us-ng2'], 'filepath': '/var/log/nginx/cache.log', 'encoding': 'latin-1',}),
+    {'source': (SourceLog, {'ssh_params': HOSTS['us-ng2'], 'filepath': '/var/log/nginx/cache.log', 'encoding': 'latin-1',}),
      'parser': NginxCacheParser,
      'collection': NG_CACHE_COLL,
      },
-    {'source': (MysqladminExtendedRelativeSource, {'sshparams': HOSTS['us-my1'],}),
+    {'source': (MysqladminExtendedRelativeSource, {'ssh_params': HOSTS['us-my1'],}),
      'parser': MysqladminExtendedRelativeParser,
      'collection': MYSQL_COLL,
      },
-    {'source': (DfSource, {'sshparams': HOSTS['us-my1'], 'filepath': '/mnt',}),
+    {'source': (DfSource, {'ssh_params': HOSTS['us-my1'], 'filepath': '/mnt',}),
      'parser': DfParser,
      'collection': SYSTEM_COLL,
      },

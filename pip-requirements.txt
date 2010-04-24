@@ -4,3 +4,5 @@ orbited==0.7.10
 stompservice
 simplejson
 pytz
+nose
+supervisord

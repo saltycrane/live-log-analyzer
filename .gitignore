@@ -3,9 +3,6 @@
 *.log
 create_settings_template.py
 settings.py
-tests.py
-create_readme.py
-README.us.rst
 virtenv
 mongodb
 mongodb_data/
@@ -15,3 +12,4 @@ TODO.rst
 reportgenerators_search.py
 staticmedia/flot/
 Archive/
+.coverage
