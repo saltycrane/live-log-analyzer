@@ -46,7 +46,7 @@ class SourceExecutive(object):
             line = self.source.get_line()
             data = self.parser.parse_line(line)
             if data:
-                data['server'] = self.source.sshparams['host']
+                data['server'] = self.source.ssh_params['host']
                 try:
                     self.mongo.insert(data)
                 except InvalidStringData, e:
