@@ -1,7 +1,12 @@
 """
-Important note: the name of the mongoDB "collection" is what links a "source"
+Note 1: the name of the mongoDB "collection" is what links a "source"
 with an "analyzer". So for an analyzer to use the data from a source, the name
 of the collection must be the same in SOURCES_SETTINGS and ANALYSIS_SETTINGS.
+
+Note 2: the keys of PLOT_SET (e.g. 'rpm', 'cache0', 'cache1', 'http_status', 'wp_login',
+'aurt', etc.) is what links the data from the server to the plot on the browser.
+It is used in the javascript file, "staticmedia/style.js". This is entirely
+unnecessary, but my javascript is not too strong. It should be fixed.
 """
 
 from sources import (SourceLog, MysqladminExtendedRelativeSource,
@@ -68,7 +73,6 @@ PLOT_SET = {
         'label': 'Requests/min',
         'format': '%d',
         'collection': NG_CACHE_COLL,
-        # 'window_length': 120,
         'analyzers': [
             (RequestsPerMinuteByType, {'media': '1'}),
             (RequestsPerMinuteByType, {'media': '0'}),
@@ -113,18 +117,7 @@ PLOT_SET = {
         'format': '%d',
         'collection': NG_CACHE_COLL,
         'analyzers': [
-            (WordpressLoggedInByUser, {'wp_user': r'eric\.yates'}),
             (WordpressLoggedIn, {}),
-            ],
-        },
-    'php_error': {
-        'label': 'PHP error count',
-        'format': '%d',
-        'collection': PHP_ERROR_COLL,
-        'analyzers': [
-            (PhpErrorCountByServer, {'server': 'us-apa1'}),
-            (PhpErrorCountByServer, {'server': 'us-apa2'}),
-            (PhpErrorCountByServer, {'server': 'us-apa3'}),
             ],
         },
     'aurt': {
@@ -150,7 +143,6 @@ PLOT_SET = {
         'flot_options': {'yaxis': {'max': 4100,},},
         'analyzers': [
             (MysqlQuestionsPerSecond, {'server': 'us-my1'}),
-            (MysqlQuestionsPerSecond, {'server': 'us-my2'}),
             ],
         },
     'df': {
