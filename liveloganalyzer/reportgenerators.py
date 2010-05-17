@@ -1,13 +1,12 @@
 import copy
-import time
 from collections import defaultdict
 from datetime import datetime, timedelta
-from pprint import pprint
-from pymongo import Connection, ASCENDING, DESCENDING
+from pymongo import Connection, DESCENDING
 from pymongo.errors import CollectionInvalid, InvalidStringData
 from debuglogging import error
 from settings import MONGODB_NAME, PROCESSED_MAX_SIZE
-from util import smart_str, convert_time_for_flot, transpose_list_of_lists
+from util import convert_time_for_flot, transpose_list_of_lists
+
 
 class FlotReportGenerator(object):
     """
@@ -157,7 +156,9 @@ class FlotReportGenerator(object):
         # db.drop_collection(self.processed_collection)
         try:
             self.mongo_processed = db.create_collection(
-                self.processed_collection, capped=True, size=PROCESSED_MAX_SIZE*1048576)
+                self.processed_collection,
+                capped=True,
+                size=PROCESSED_MAX_SIZE * 1048576)
         except CollectionInvalid:
             self.mongo_processed = db[self.processed_collection]
 
@@ -181,8 +182,8 @@ class FlotReportGenerator(object):
         """
         self.labels = dict([
                 (groupname, groupdata['label'])
-                for groupname, groupdata in self.groups.iteritems()
-                ])
+                for groupname, groupdata in self.groups.iteritems()])
+
         def get_flot_options():
             default = copy.deepcopy(self.default_flot_options)
             if 'flot_options' in groupdata:
@@ -190,11 +191,11 @@ class FlotReportGenerator(object):
             return default
         self.flot_options = dict([
                 (groupname, get_flot_options())
-                 for groupname, groupdata in self.groups.iteritems()
-                 ])
+                 for groupname, groupdata in self.groups.iteritems()])
 
     def calc_window_endpoints(self):
-        """Calculate the window start and end points to be passed to each analyzer
+        """Calculate the window start and end points to be passed to each
+        analyzer
         """
         window_end = datetime.now()
 
@@ -206,29 +207,31 @@ class FlotReportGenerator(object):
             return (window_start, window_end)
         self.window_endpoints = dict([
                 (groupname, calc_window_endpoints_single())
-                for groupname, groupdata in self.groups.iteritems()
-                ])
+                for groupname, groupdata in self.groups.iteritems()])
         self.flot_timestamp = dict([
-                (groupname, convert_time_for_flot(self.window_endpoints[groupname][0]))
-                for groupname, groupdata in self.groups.iteritems()
-                ])
+                (groupname,
+                 convert_time_for_flot(self.window_endpoints[groupname][0]))
+                for groupname, groupdata in self.groups.iteritems()])
 
     def run_analyzers_for_all_groups(self):
-        """Loop through the list of groups (plots) to create and generate datapoints
+        """Loop through the list of groups (plots) to create and generate
+        datapoints
         """
         def run_list_of_analyzers(analyzers_and_kwargs):
-            """Given a list of tuples (analyzer classes, kwargs), run each analyzer,
-            and return a list of the datapoints of each analyzer (for a single point
-            in time)
+            """Given a list of tuples (analyzer classes, kwargs), run each
+            analyzer, and return a list of the datapoints of each analyzer
+            (for a single point in time)
             """
             def run_analyzer(analyzer, kwargs):
-                """Instantiate the given analyzer, passing it the mongodb collection
+                """Instantiate the given analyzer, passing it the mongodb
+                collection
                 object and kwargs, run it, and return a datapoint as a tuple
                 (timestamp, data) or (timestamp, [data1, data2, ...])
                 """
                 a = analyzer(self.mongo_raw[groupname], **kwargs)
                 a.run(self.window_endpoints[groupname])
                 return (self.flot_timestamp[groupname], a.data)
+
             def flatten(subpoint):
                 """
                 If subpoint is of the form:
@@ -262,8 +265,7 @@ class FlotReportGenerator(object):
 
         self.datapoint = dict([
                 (groupname, run_list_of_analyzers(groupdata['analyzers']))
-                for groupname, groupdata in self.groups.iteritems()
-                ])
+                for groupname, groupdata in self.groups.iteritems()])
 
     def write_datapoint_to_mongodb(self):
         """Write datapoint data structure to mongoDB
@@ -271,11 +273,11 @@ class FlotReportGenerator(object):
         try:
             self.mongo_processed.insert(self.datapoint)
         except InvalidStringData, e:
-            error('%s\n%s' % (str(e), line))
+            error('%s\n%s' % (str(e), str(self.datapoint)))
 
     def get_and_assemble_history_data_for_flot(self):
-        """Get history data from mongoDB and assemble it for transmission to a flot
-        stacked bar chart
+        """Get history data from mongoDB and assemble it for transmission to a
+        flot stacked bar chart
         """
         def remove_id_keys(datapoint):
             del datapoint['_id']
@@ -284,10 +286,10 @@ class FlotReportGenerator(object):
         def transpose_history_data(history_data):
             return dict([
                     (k, transpose_list_of_lists(lol))
-                    for k, lol in history_data.iteritems()
-                    ])
+                    for k, lol in history_data.iteritems()])
 
-        datapoints = self.mongo_processed.find().sort('$natural', DESCENDING).limit(self.history_length)
+        datapoints = self.mongo_processed.find(
+            ).sort('$natural', DESCENDING).limit(self.history_length)
         datapoints = [remove_id_keys(dp) for dp in datapoints]
 
         self.history = defaultdict(list)
@@ -297,14 +299,13 @@ class FlotReportGenerator(object):
         self.history = transpose_history_data(self.history)
 
     def assemble_current_datapoints(self):
-        """Assemble a data structure of all the data points for the current time
-        formatted according to self.groups[groupname]['format']
+        """Assemble a data structure of all the data points for the current
+        time formatted according to self.groups[groupname]['format']
         """
         self.current_data = dict([
                 (groupname, [groupdata['format'] % point[1]
                              for point in self.datapoint[groupname]])
-                for groupname, groupdata in self.groups.iteritems()
-                ])
+                for groupname, groupdata in self.groups.iteritems()])
 
     def prepare_output_data(self):
         self.out['index'] = self.index

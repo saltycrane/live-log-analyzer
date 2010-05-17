@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from pprint import pprint
+
 
 class BaseParser(object):
     """Base class not to be used directly.
@@ -39,6 +39,7 @@ class BaseParser(object):
         """Implement this in the subclass. Accept/return parsed data structure.
         """
         return data
+
 
 class NginxCacheParser(BaseParser):
     """Used to parse the following Nginx log format:
@@ -97,6 +98,7 @@ class NginxCacheParser(BaseParser):
             data.update(newdata)
         return data
 
+
 class NginxErrorParser(BaseParser):
     date_format = "%Y/%m/%d %H:%M:%S"
     pattern = ' '.join([
@@ -104,12 +106,14 @@ class NginxErrorParser(BaseParser):
             r'\[(?P<level>.*)\]',
             ])
 
+
 class PhpErrorParser(BaseParser):
     date_format = "%d-%b-%Y %H:%M:%S"
     pattern = ' '.join([
             r'^\[(?P<time>.*)\]',
             r'(?P<therest>.*)',
             ])
+
 
 class ApacheAccessParser(BaseParser):
     date_format = "%d/%b/%Y:%H:%M:%S"
@@ -121,6 +125,7 @@ class ApacheAccessParser(BaseParser):
             r'.* ',
             r'\[(?P<time>\d+/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} -\d{4})\] ',
             ])
+
 
 class SyslogParser(BaseParser):
     date_format = "%Y %b %d %H:%M:%S"
@@ -135,6 +140,7 @@ class SyslogParser(BaseParser):
     def post_process(cls, data):
         data['time'] = '%d %s' % (datetime.now().year, data['time'])
         return data
+
 
 class MysqladminExtendedRelativeParser(BaseParser):
     """For use with MysqladminExtendedRelativeSource
@@ -154,15 +160,16 @@ class MysqladminExtendedRelativeParser(BaseParser):
         """Divide counts by uptime to get counts per second
         """
         # TODO: don't hardcode UPTIME to 10.0
-        # This parameter is tied to the -i parameter in MysqladminExtendedRelativeSource
+        # This parameter is tied to the -i parameter in
+        # MysqladminExtendedRelativeSource
         # Maybe need to combine "sources" and "parsers" classes
         UPTIME = 10.0
         data = dict([(k, v) for k, v in data.iteritems() if v])
         return dict([
-                (k, int(v)/UPTIME)
+                (k, int(v) / UPTIME)
                 for k, v in data.iteritems()
-                if '_persecond' in k
-                ])
+                if '_persecond' in k])
+
 
 class MysqladminExtendedAbsoluteParser(BaseParser):
     """For use with MysqladminExtendedAbsoluteSource
@@ -182,6 +189,7 @@ class MysqladminExtendedAbsoluteParser(BaseParser):
         """Remove empty values
         """
         return dict([(k, v) for k, v in data.iteritems() if v])
+
 
 class VmstatParser(BaseParser):
     """Parses vmstat output
@@ -204,6 +212,7 @@ class VmstatParser(BaseParser):
             r'(?P<id>\d+)',
             r'(?P<wa>\d+)',
             ])
+
 
 class DfParser(BaseParser):
     """Parses df output

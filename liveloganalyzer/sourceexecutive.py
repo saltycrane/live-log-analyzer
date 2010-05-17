@@ -1,10 +1,10 @@
 import time
-from pprint import pprint
 from threading import Thread
 from pymongo import Connection
 from pymongo.errors import CollectionInvalid, InvalidStringData
 from debuglogging import error
 from settings import MONGODB_NAME, MAX_COLLECTION_SIZE, SOURCES_SETTINGS
+
 
 def main():
     for ss in SOURCES_SETTINGS:
@@ -12,9 +12,11 @@ def main():
         t.start()
         time.sleep(1)
 
+
 def run_one(settings):
     s = SourceExecutive(settings)
     s.start()
+
 
 class SourceExecutive(object):
     def __init__(self, settings):
@@ -37,7 +39,8 @@ class SourceExecutive(object):
         db = conn[MONGODB_NAME]
         try:
             self.mongo = db.create_collection(
-                self.collection, capped=True, size=MAX_COLLECTION_SIZE*1048576)
+                self.collection, capped=True,
+                size=MAX_COLLECTION_SIZE * 1048576)
         except CollectionInvalid:
             self.mongo = db[self.collection]
 
@@ -52,7 +55,8 @@ class SourceExecutive(object):
                 except InvalidStringData, e:
                     error('%s\n%s' % (str(e), line))
             else:
-                error('%s could not parse line:\n%s' % (str(self.parser), line))
+                error("%s couldn't parse line:\n%s" % (str(self.parser), line))
+
 
 if __name__ == '__main__':
     main()

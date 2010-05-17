@@ -1,16 +1,17 @@
 """
 Note 1: the name of the mongoDB "collection" is what links a "source"
-with an "analyzer". So for an analyzer to use the data from a source, the name
-of the collection must be the same in SOURCES_SETTINGS and ANALYSIS_SETTINGS.
+with an "analyzer". So for an analyzer to use the data from a source,
+the name of the collection must be the same in SOURCES_SETTINGS and
+ANALYSIS_SETTINGS.
 
-Note 2: the keys of PLOT_SET (e.g. 'rpm', 'cache0', 'cache1', 'http_status', 'wp_login',
-'aurt', etc.) is what links the data from the server to the plot on the browser.
-It is used in the javascript file, "staticmedia/style.js". This is entirely
-unnecessary, but my javascript is not too strong. It should be fixed.
+Note 2: the keys of PLOT_SET (e.g. 'rpm', 'cache0', 'cache1',
+'http_status', 'wp_login', 'aurt', etc.) is what links the data from
+the server to the plot on the browser.  It is used in the javascript
+file, "staticmedia/style.js". This is entirely unnecessary, but my
+javascript is not too strong. It should be fixed.
 """
 
-from sources import (SourceLog, MysqladminExtendedRelativeSource,
-                     MysqladminExtendedAbsoluteSource, VmstatSource, DfSource,
+from sources import (SourceLog, MysqladminExtendedRelativeSource, DfSource,
                      )
 from parsers import (NginxCacheParser, MysqladminExtendedRelativeParser,
                      MysqladminExtendedAbsoluteParser, PhpErrorParser, SyslogParser,
@@ -23,8 +24,8 @@ from analyzers import (CacheStatus, Upstream5xxStatus, AvgUpstreamResponseTimePe
                        WordpressLoggedInByUser, AvgUpstreamResponseTimePerServerLoggedIn,
                        )
 MONGODB_NAME = 'mydb'
-PROCESSED_MAX_SIZE = 1 # in megabytes
-MAX_COLLECTION_SIZE = 5 # in megabytes
+PROCESSED_MAX_SIZE = 1  # in megabytes
+MAX_COLLECTION_SIZE = 5  # in megabytes
 NG_CACHE_COLL = 'ng_cache'
 SYSLOG_COLL = 'syslog'
 PHP_ERROR_COLL = 'php_error'
@@ -82,7 +83,7 @@ PLOT_SET = {
         'label': 'Cache status (non-media)',
         'format': '%.1f%%',
         'collection': NG_CACHE_COLL,
-        'flot_options': {'yaxis': {'max': 100,},},
+        'flot_options': {'yaxis': {'max': 100, }, },
         'analyzers': [
             (CacheStatus, {'status': 'HIT', 'media': '0'}),
             (CacheStatus, {'status': 'MISS', 'media': '0'}),
@@ -95,7 +96,7 @@ PLOT_SET = {
         'label': 'Cache status (media)',
         'format': '%.1f%%',
         'collection': NG_CACHE_COLL,
-        'flot_options': {'yaxis': {'min': 50, 'max': 100,},},
+        'flot_options': {'yaxis': {'min': 50, 'max': 100, }, },
         'analyzers': [
             (CacheStatus, {'status': 'HIT', 'media': '1'}),
             (CacheStatus, {'status': 'MISS', 'media': '1'}),
@@ -125,7 +126,8 @@ PLOT_SET = {
         'format': '%.2f',
         'collection': NG_CACHE_COLL,
         'analyzers': [
-            (AvgUpstreamResponseTimePerServerLoggedIn, {'logged_in': r'^\s*$',}),
+            (AvgUpstreamResponseTimePerServerLoggedIn,
+             {'logged_in': r'^\s*$', }),
             ],
         },
     'aurtli': {
@@ -133,14 +135,15 @@ PLOT_SET = {
         'format': '%.2f',
         'collection': NG_CACHE_COLL,
         'analyzers': [
-            (AvgUpstreamResponseTimePerServerLoggedIn, {'logged_in': r'wordpress_logged_in_',}),
+            (AvgUpstreamResponseTimePerServerLoggedIn,
+             {'logged_in': r'wordpress_logged_in_', }),
             ],
         },
     'mysql': {
         'label': 'MySQL Questions/sec',
         'format': '%.1f',
         'collection': MYSQL_COLL,
-        'flot_options': {'yaxis': {'max': 4100,},},
+        'flot_options': {'yaxis': {'max': 4100, }, },
         'analyzers': [
             (MysqlQuestionsPerSecond, {'server': 'us-my1'}),
             ],
@@ -149,9 +152,10 @@ PLOT_SET = {
         'label': 'Disk Usage',
         'format': '%.1f',
         'collection': SYSTEM_COLL,
-        'flot_options': {'yaxis': {'max': 100,},},
+        'flot_options': {'yaxis': {'max': 100, }, },
         'analyzers': [
-            (GenericAverageValueAnalyzer, {'server': 'us-my1', 'parameter': 'df_use_percent',}),
+            (GenericAverageValueAnalyzer,
+             {'server': 'us-my1', 'parameter': 'df_use_percent', }),
             ]
         },
     }
@@ -159,12 +163,14 @@ PLOT_SET = {
 ANALYSIS_SETTINGS = {
     'channel_name': '/topic/graph',
     'time_periods': [
-        {'interval': 5*60,                 # in seconds
-         'history_length': 144,        # number of processed data points to save
-         'default_window_length': 5*60+5,        # in seconds
+        {'interval': 5 * 60,                 # in seconds
+         'history_length': 144,       # number of processed data points to save
+         'default_window_length': 5 * 60 + 5,        # in seconds
          'default_flot_options': {
                 'series': {'stack': 0,
-                           'bars': {'show': True, 'barWidth': (5*60)*(0.8*1000), 'lineWidth': 1,},},
+                           'bars': {'show': True,
+                                    'barWidth': (5 * 60) * (0.8 * 1000),
+                                    'lineWidth': 1, }, },
                 'xaxis': {'mode': "time",
                           'timeformat': "%H:%M",
                           'labelWidth': 20,
@@ -180,7 +186,9 @@ ANALYSIS_SETTINGS = {
          'default_window_length': 29,        # in seconds
          'default_flot_options': {
                 'series': {'stack': 0,
-                           'bars': {'show': True, 'barWidth': (5)*(0.8*1000), 'lineWidth': 1,},},
+                           'bars': {'show': True,
+                                    'barWidth': (5) * (0.8 * 1000),
+                                    'lineWidth': 1, }, },
                 'xaxis': {'mode': "time",
                           'timeformat': ":%M",
                           'labelWidth': 20,

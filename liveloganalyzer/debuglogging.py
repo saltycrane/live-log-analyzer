@@ -5,7 +5,8 @@ ERROR_LOG_FILENAME = 'lla-error.log'
 
 # set up formatting
 stdout_formatter = logging.Formatter('%(message)s')
-formatter = logging.Formatter('[%(asctime)s] %(levelno)s (%(process)d) %(module)s: %(message)s')
+formatter = logging.Formatter(
+    '[%(asctime)s] %(levelno)s (%(process)d) %(module)s: %(message)s')
 
 # set up logging to STDOUT for all levels DEBUG and higher
 sh = logging.StreamHandler(sys.stdout)

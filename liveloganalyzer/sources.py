@@ -1,17 +1,17 @@
-import time
 from subprocess import Popen, PIPE, STDOUT
-from debuglogging import error
+
 
 class SourceBase(object):
-    """Subclasses should define instance attributes self.ssh_params, self.cmd, self.encoding
-    and optionally the instance method self.filter()
-    self.ssh_params is a dict containing the parameters to pass to the ssh command.
-    At a minimum, it should define self.ssh_params['hostname']. It may also define
-    other ssh options such as 'host', 'user' or 'identityfile'. Option names are
-    the same as those used in the ssh config file, except in lowercase. For more
-    information see the man page for ssh_config. The 'host' option is used as a
-    nickname. If 'host' is not specified, the value for 'hostname' is assigned
-    to 'host'.
+    """Subclasses should define instance attributes self.ssh_params,
+    self.cmd, self.encoding and optionally the instance method
+    self.filter() self.ssh_params is a dict containing the parameters
+    to pass to the ssh command.  At a minimum, it should define
+    self.ssh_params['hostname']. It may also define other ssh options
+    such as 'host', 'user' or 'identityfile'. Option names are the
+    same as those used in the ssh config file, except in
+    lowercase. For more information see the man page for
+    ssh_config. The 'host' option is used as a nickname. If 'host' is
+    not specified, the value for 'hostname' is assigned to 'host'.
 
     Example self.ssh_params:
 
@@ -36,7 +36,7 @@ class SourceBase(object):
         self.ssh_cmd = ' '.join(['ssh',
                                 ssh_options,
                                 self.ssh_params['hostname'],
-                                '"%s"' %  self.cmd,
+                                '"%s"' % self.cmd,
                                 ])
 
     def get_line(self):
@@ -57,6 +57,7 @@ class SourceBase(object):
         """
         return line
 
+
 class SourceLog(SourceBase):
     """A source log file on a remote host.
     """
@@ -64,6 +65,7 @@ class SourceLog(SourceBase):
         self.ssh_params = ssh_params
         self.encoding = encoding
         self.cmd = 'tail --follow=name %s' % filepath
+
 
 class MysqladminExtendedRelativeSource(SourceBase):
     """Get data from mysqladmin extended command (relative)
@@ -75,11 +77,11 @@ class MysqladminExtendedRelativeSource(SourceBase):
 
     def filter(self, line):
         if   ('Questions' in line or
-              'Slow_queries' in line
-              ):
+              'Slow_queries' in line):
             return line
         else:
             return ''
+
 
 class MysqladminExtendedAbsoluteSource(SourceBase):
     """Get data from mysqladmin extended command (absolute)
@@ -92,11 +94,11 @@ class MysqladminExtendedAbsoluteSource(SourceBase):
     def filter(self, line):
         if   ('Slave_running' in line or
               'Threads_connected' in line or
-              'Threads_running' in line
-              ):
+              'Threads_running' in line):
             return line
         else:
             return ''
+
 
 class VmstatSource(SourceBase):
     """Get data from vmstat
@@ -108,11 +110,11 @@ class VmstatSource(SourceBase):
 
     def filter(self, line):
         if   (line.startswith('procs') or
-              line.startswith(' r')
-              ):
+              line.startswith(' r')):
             return ''
         else:
             return line
+
 
 class DfSource(SourceBase):
     """Get data from "df"

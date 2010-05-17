@@ -1,7 +1,8 @@
 import re
-from pprint import pprint
-from pymongo import Connection, ASCENDING
+import textwrap
+from pymongo import ASCENDING
 from util import safe_divide
+
 
 class RequestsPerMinuteByType(object):
     def __init__(self, mongo_collection, media):
@@ -13,11 +14,13 @@ class RequestsPerMinuteByType(object):
         self.mongo.ensure_index([('time', ASCENDING),
                                  ('media', ASCENDING),
                                  ])
-        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+        N = self.mongo.find({'time': {'$gt': time_limit[0],
+                                      '$lt': time_limit[1]},
                              'media': self.media,
                              }).count()
         td = time_limit[1] - time_limit[0]
         self.data = 60.0 * safe_divide(float(N), td.seconds)
+
 
 class CacheStatus(object):
     def __init__(self, mongo_collection, status, media):
@@ -30,16 +33,19 @@ class CacheStatus(object):
         self.mongo.ensure_index([('time', ASCENDING),
                                  ('media', ASCENDING),
                                  ('status', ASCENDING)])
-        count = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+        count = self.mongo.find({'time': {'$gt': time_limit[0],
+                                          '$lt': time_limit[1]},
                                  'media': self.media,
                                  'status': self.status,
                                  }).count()
-        total = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+        total = self.mongo.find({'time': {'$gt': time_limit[0],
+                                          '$lt': time_limit[1]},
                                  'media': self.media,
                                  'status': {'$ne': '-'},
                                  }).count()
-        perc = safe_divide(100.0*count, total)
+        perc = safe_divide(100.0 * count, total)
         self.data = perc
+
 
 class Upstream5xxStatus(object):
     def __init__(self, mongo_collection):
@@ -49,10 +55,12 @@ class Upstream5xxStatus(object):
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
                                  ('ups_st', ASCENDING)])
-        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+        N = self.mongo.find({'time': {'$gt': time_limit[0],
+                                      '$lt': time_limit[1]},
                              'ups_st': re.compile(r'5\d\d'),
                              }).count()
         self.data = N
+
 
 class AvgUpstreamResponseTimePerServer(object):
     def __init__(self, mongo_collection, server_address):
@@ -68,22 +76,27 @@ class AvgUpstreamResponseTimePerServer(object):
             key=None,
             condition={'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
                        'ups_rt': {'$ne': '-'},
-                       'ups_ad': self.server_address,},
+                       'ups_ad': self.server_address, },
             initial={'count': 0, 'total': 0},
-            reduce='function(doc, out) {out.count++; out.total += parseFloat(doc.ups_rt)}',
+            reduce=textwrap.dedent('''
+                function(doc, out) {
+                    out.count++;
+                    out.total += parseFloat(doc.ups_rt);
+                }'''),
             finalize='function(out) {out.avg = out.total / out.count}',
             )
         if result:
             avg = result[0]['avg']
-            count = result[0]['count']
             self.data = avg
         else:
             self.data = 0.0
+
 
 class AvgUpstreamResponseTimePerServerLoggedIn(object):
     """This one is the sh**
     """
     data_length = 1
+
     def __init__(self, mongo_collection, logged_in):
         self.mongo = mongo_collection
         self.logged_in = logged_in
@@ -102,7 +115,11 @@ class AvgUpstreamResponseTimePerServerLoggedIn(object):
                        'wp_login': re.compile(self.logged_in),
                        },
             initial={'count': 0, 'total': 0},
-            reduce='function(doc, out) {out.count++; out.total += parseFloat(doc.ups_rt)}',
+            reduce=textwrap.dedent('''
+                function(doc, out) {
+                    out.count++;
+                    out.total += parseFloat(doc.ups_rt);
+                }'''),
             finalize='function(out) {out.avg = out.total / out.count}',
             )
         result = sorted(result, key=lambda item: item['ups_ad'])
@@ -114,6 +131,7 @@ class AvgUpstreamResponseTimePerServerLoggedIn(object):
         else:
             self.data = [0.0] * self.data_length
 
+
 class WordpressLoggedIn(object):
     def __init__(self, mongo_collection):
         self.mongo = mongo_collection
@@ -121,25 +139,30 @@ class WordpressLoggedIn(object):
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
-                                 ('wp_login', ASCENDING),])
-        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+                                 ('wp_login', ASCENDING), ])
+        N = self.mongo.find({'time': {'$gt': time_limit[0],
+                                      '$lt': time_limit[1]},
                              'wp_login': re.compile(r'wordpress_logged_in_'),
                              }).count()
         self.data = N
+
 
 class WordpressLoggedInByUser(object):
     def __init__(self, mongo_collection, wp_user):
         self.mongo = mongo_collection
         self.wp_user = wp_user
         self.label = wp_user
+        self.pattern = r'wordpress_logged_in_%s' % wp_user
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
-                                 ('wp_login', ASCENDING),])
-        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
-                             'wp_login': re.compile(r'wordpress_logged_in_%s' % self.wp_user),
+                                 ('wp_login', ASCENDING), ])
+        N = self.mongo.find({'time': {'$gt': time_limit[0],
+                                      '$lt': time_limit[1]},
+                             'wp_login': re.compile(self.pattern),
                              }).count()
         self.data = N
+
 
 class PhpErrorCountByServer(object):
     def __init__(self, mongo_collection, server):
@@ -150,10 +173,12 @@ class PhpErrorCountByServer(object):
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
                                  ('server', ASCENDING)])
-        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+        N = self.mongo.find({'time': {'$gt': time_limit[0],
+                                      '$lt': time_limit[1]},
                              'server': self.server,
                              }).count()
         self.data = N
+
 
 class SyslogCountByServerAndProcess(object):
     def __init__(self, mongo_collection, server, process):
@@ -167,14 +192,17 @@ class SyslogCountByServerAndProcess(object):
                                  ('server', ASCENDING),
                                  ('process', ASCENDING),
                                  ])
-        N = self.mongo.find({'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
+        N = self.mongo.find({'time': {'$gt': time_limit[0],
+                                      '$lt': time_limit[1]},
                              # 'server': self.server,
                              # 'process': re.compile(self.process),
                              }).count()
         self.data = N
 
+
 class GenericAverageValueAnalyzer(object):
-    def __init__(self, mongo_collection, server, parameter, label='generic avg value'):
+    def __init__(self, mongo_collection, server, parameter,
+                 label='generic avg value'):
         self.mongo = mongo_collection
         self.server = server
         self.parameter = parameter
@@ -201,11 +229,12 @@ class GenericAverageValueAnalyzer(object):
         else:
             self.data = 0
 
+
 class MysqlQuestionsPerSecond(object):
     def __init__(self, mongo_collection, server):
         self.mongo = mongo_collection
         self.label = 'Questions/sec'
-        self.server = server # master or slave (e.g. us-my1 or us-my2)
+        self.server = server  # master or slave (e.g. us-my1 or us-my2)
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
@@ -214,7 +243,6 @@ class MysqlQuestionsPerSecond(object):
         result = self.mongo.group(
             key=None,
             condition={'time': {'$gt': time_limit[0], '$lt': time_limit[1]},
-                       # 'questions_persecond': {'$exists': 'true'}, # this doesnt work
                        'questions_persecond': {'$gt': 0},
                        'server': self.server,
                        },
@@ -230,11 +258,12 @@ class MysqlQuestionsPerSecond(object):
         else:
             self.data = 0
 
+
 class MysqlSlowQueriesPerSecond(object):
     def __init__(self, mongo_collection, server):
         self.mongo = mongo_collection
         self.label = 'Slow queries/sec'
-        self.server = server # master or slave (e.g. us-my1 or us-my2)
+        self.server = server  # master or slave (e.g. us-my1 or us-my2)
 
     def run(self, time_limit):
         self.mongo.ensure_index([('time', ASCENDING),
